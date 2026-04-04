@@ -16,29 +16,39 @@ export function BrandLogo({
   theme = "light",
   className,
 }: BrandLogoProps) {
-  const titleClassName =
-    theme === "dark"
-      ? "text-sm font-semibold uppercase tracking-[0.2em] text-brand"
-      : "text-sm font-semibold uppercase tracking-[0.2em] text-brand-light";
-  const subtitleClassName =
-    theme === "dark" ? "text-xs text-slate-500" : "text-xs text-slate-300";
-
   return (
-    <Link href={href} className={cn("flex items-center gap-3", className)}>
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_14px_30px_-16px_rgba(15,23,42,0.55)]">
+    <Link href={href} className={cn("group flex items-center gap-3", className)}>
+      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-slate-950 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.2)] transition-transform duration-200 group-hover:scale-105">
         <Image
           src="/review-machine-logo.png"
           alt="Review Machine logo"
-          width={compact ? 52 : 64}
-          height={compact ? 52 : 64}
-          className="h-12 w-12 object-cover sm:h-14 sm:w-14"
+          width={compact ? 40 : 48}
+          height={compact ? 40 : 48}
+          className={cn(
+            "object-cover",
+            compact ? "h-10 w-10" : "h-11 w-11 sm:h-12 sm:w-12",
+          )}
           priority
         />
       </div>
       <div>
-        <p className={titleClassName}>Review Machine</p>
+        <p
+          className={cn(
+            "text-sm font-bold tracking-tight",
+            theme === "dark" ? "text-ink" : "text-white",
+          )}
+        >
+          Review Machine
+        </p>
         {!compact ? (
-          <p className={subtitleClassName}>AI Review Funnel for local businesses</p>
+          <p
+            className={cn(
+              "text-[11px] font-medium",
+              theme === "dark" ? "text-slate-500" : "text-slate-400",
+            )}
+          >
+            AI Review Funnels
+          </p>
         ) : null}
       </div>
     </Link>

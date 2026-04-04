@@ -9,6 +9,7 @@ import User from "@/models/User";
 export async function POST(request: Request) {
   try {
     const session = await requireApiUser();
+    const appUrl = new URL(request.url).origin;
     const body = (await request.json()) as {
       tier?: string;
       interval?: string;
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
       phone,
       tier: selection.tier,
       interval: selection.interval,
+      appUrl,
     });
 
     await markPendingSubscriptionForUser({

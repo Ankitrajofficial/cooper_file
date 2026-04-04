@@ -35,14 +35,20 @@ function getCashfreeHeaders() {
   };
 }
 
-function getAppBaseUrl() {
-  const value = process.env.NEXT_PUBLIC_APP_URL;
-
-  if (!value) {
-    throw new Error("Missing NEXT_PUBLIC_APP_URL environment variable.");
+function normalizeAppBaseUrl(appUrl?: string) {
+  if (appUrl) {
+    return appUrl.replace(/\/$/, "");
   }
 
-  return value.replace(/\/$/, "");
+  const fallback = process.env.NEXT_PUBLIC_APP_URL;
+
+  if (!fallback) {
+    throw new Error(
+      "Missing app URL. Set NEXT_PUBLIC_APP_URL or pass the current request origin.",
+    );
+  }
+
+  return fallback.replace(/\/$/, "");
 }
 
 async function cashfreeRequest<T>(path: string, init?: RequestInit) {
@@ -77,6 +83,7 @@ export async function createCashfreeSubscription(options: {
   phone: string;
   tier: Exclude<SubscriptionTier, "none">;
   interval: BillingInterval;
+  appUrl?: string;
 }) {
   const amount = getPriceForPlan(options.tier, options.interval);
   const subscriptionId = `subs_${options.userId.slice(-8)}_${options.tier}_${options.interval}_${Date.now()}`;
@@ -117,7 +124,7 @@ export async function createCashfreeSubscription(options: {
         payment_methods: ["upi", "card", "enach"],
       },
       subscription_meta: {
-        return_url: `${getAppBaseUrl()}/dashboard/billing/confirm?subscription_id=${subscriptionId}`,
+        return_url: `${normalizeAppBaseUrl(options.appUrl)}/dashboard/billing/confirm?subscription_id=${subscriptionId}`,
         notification_channel: ["EMAIL"],
         session_id_expiry: sessionExpiry.toISOString(),
       },

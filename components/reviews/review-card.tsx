@@ -50,15 +50,48 @@ export function ReviewCard({
   }
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-sm leading-7 text-slate-700">{text}</p>
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <Button onClick={handleCopyAndOpen}>
-          {copied ? "Copied ✅" : "Copy & Review"}
+    <div className="card-hover rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
+      <p className="text-sm leading-relaxed text-slate-700">{text}</p>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <Button size="sm" onClick={handleCopyAndOpen}>
+          {copied ? (
+            <>
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              Copied
+            </>
+          ) : (
+            <>
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+              Copy & Review
+            </>
+          )}
         </Button>
         {error ? <span className="text-xs text-rose-600">{error}</span> : null}
       </div>
     </div>
   );
 }
-

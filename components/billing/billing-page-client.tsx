@@ -126,70 +126,93 @@ export function BillingPageClient({
     <>
       <Script src="https://sdk.cashfree.com/js/v3/cashfree.js" strategy="afterInteractive" />
 
-      <div className="space-y-8">
-        <section className="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
+      <div className="space-y-6">
+        {/* Header */}
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-6">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
+            <div className="max-w-xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand">
                 Billing & Access
               </p>
-              <h1 className="mt-3 text-3xl font-bold text-ink sm:text-4xl">
-                Control link expiry, plan limits, and autopay in one place.
+              <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+                Control link expiry, plan limits, and autopay.
               </h1>
-              <p className="mt-3 text-base leading-7 text-slate-600">
-                Cashfree powers the subscription flow. Once a subscription is active,
-                your account can create review links within the allowed tier limit,
-                and each link can inherit or override the billing period expiry date.
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                Cashfree powers the subscription flow. Once active, your account
+                can create review links within the allowed tier limit.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">Current plan</p>
-              <p className="mt-2 text-2xl font-bold text-ink">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-5">
+              <p className="text-[11px] font-medium text-slate-500">Current plan</p>
+              <p className="mt-1.5 text-xl font-bold text-ink">
                 {activePlan?.name || "No active plan"}
               </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Status: <span className="font-semibold text-slate-700">{summary.status}</span>
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Active links:{" "}
-                <span className="font-semibold text-slate-700">
-                  {summary.activeClientCount}
-                  {summary.clientLimit === null ? " / Unlimited" : ` / ${summary.clientLimit}`}
-                </span>
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Billing period ends:{" "}
-                <span className="font-semibold text-slate-700">
-                  {summary.currentPeriodEnd
-                    ? new Date(summary.currentPeriodEnd).toLocaleDateString("en-IN")
-                    : "Not active"}
-                </span>
-              </p>
+              <div className="mt-2 space-y-1 text-sm text-slate-600">
+                <p>
+                  Status:{" "}
+                  <span className="font-semibold text-ink">{summary.status}</span>
+                </p>
+                <p>
+                  Active links:{" "}
+                  <span className="font-semibold text-ink">
+                    {summary.activeClientCount}
+                    {summary.clientLimit === null
+                      ? " / Unlimited"
+                      : ` / ${summary.clientLimit}`}
+                  </span>
+                </p>
+                <p>
+                  Period ends:{" "}
+                  <span className="font-semibold text-ink">
+                    {summary.currentPeriodEnd
+                      ? new Date(summary.currentPeriodEnd).toLocaleDateString(
+                          "en-IN",
+                        )
+                      : "Not active"}
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
         </section>
 
         {!cashfreeConfigured ? (
-          <section className="rounded-[2rem] border border-amber-200 bg-amber-50/90 p-5 text-sm leading-6 text-amber-900 shadow-sm">
-            Cashfree billing is not configured yet. Add `CASHFREE_APP_ID`,
-            `CASHFREE_SECRET_KEY`, and `CASHFREE_ENVIRONMENT` in `.env`, then
-            open the app on `http://localhost:3000` for local testing.
+          <section className="rounded-xl border border-amber-200/80 bg-amber-50 p-4 text-sm text-amber-800">
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-4 w-4 shrink-0 text-amber-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                />
+              </svg>
+              Cashfree billing is not configured. Add CASHFREE_APP_ID,
+              CASHFREE_SECRET_KEY, and CASHFREE_ENVIRONMENT to .env.
+            </div>
           </section>
         ) : null}
 
-        <section className="grid gap-4 lg:grid-cols-[1.1fr_1.9fr]">
-          <div className="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-panel backdrop-blur">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
+        {/* Phone + Plans */}
+        <section className="grid gap-5 lg:grid-cols-[1fr_2fr]">
+          {/* Phone */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand">
               Billing contact
             </p>
-            <h2 className="mt-3 text-2xl font-bold text-ink">
-              Phone number for Cashfree checkout
+            <h2 className="mt-2 text-lg font-bold text-ink">
+              Phone for Cashfree
             </h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Cashfree subscription setup requires a valid phone number for the customer.
+            <p className="mt-1.5 text-xs leading-5 text-slate-500">
+              Required for subscription setup.
             </p>
-            <div className="mt-5 space-y-4">
+            <div className="mt-4 space-y-3">
               <Input
                 label="Phone number"
                 value={phone}
@@ -198,23 +221,24 @@ export function BillingPageClient({
                 inputMode="numeric"
                 maxLength={10}
               />
-              <Button onClick={savePhone} disabled={isPending}>
-                Save billing phone
+              <Button size="sm" onClick={savePhone} disabled={isPending}>
+                Save phone
               </Button>
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-panel backdrop-blur">
+          {/* Plans */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand">
                   Subscription plans
                 </p>
-                <h2 className="mt-3 text-2xl font-bold text-ink">
-                  Choose the revenue model you want to enforce
+                <h2 className="mt-2 text-lg font-bold text-ink">
+                  Choose your plan
                 </h2>
               </div>
-              <div className="inline-flex rounded-2xl bg-slate-100 p-1">
+              <div className="inline-flex rounded-lg bg-slate-100 p-0.5">
                 {[
                   { value: "monthly", label: "Monthly" },
                   { value: "yearly", label: "Yearly" },
@@ -224,7 +248,7 @@ export function BillingPageClient({
                     type="button"
                     onClick={() => setInterval(option.value as typeof interval)}
                     className={cn(
-                      "rounded-xl px-4 py-2 text-sm font-semibold transition",
+                      "rounded-md px-3.5 py-1.5 text-sm font-semibold transition-all",
                       interval === option.value
                         ? "bg-white text-ink shadow-sm"
                         : "text-slate-500 hover:text-slate-700",
@@ -236,10 +260,12 @@ export function BillingPageClient({
               </div>
             </div>
 
-            <div className="mt-6 grid gap-4 xl:grid-cols-3">
+            <div className="mt-5 grid gap-4 xl:grid-cols-3">
               {plans.map((plan) => {
                 const price =
-                  interval === "monthly" ? plan.monthlyPriceInr : plan.yearlyPriceInr;
+                  interval === "monthly"
+                    ? plan.monthlyPriceInr
+                    : plan.yearlyPriceInr;
                 const isCurrent =
                   summary.tier === plan.tier &&
                   summary.interval === interval &&
@@ -249,24 +275,24 @@ export function BillingPageClient({
                   <article
                     key={plan.tier}
                     className={cn(
-                      "rounded-[1.75rem] border p-5 transition",
+                      "card-hover rounded-xl border p-5 transition-all",
                       isCurrent
-                        ? "border-brand bg-brand/[0.06] shadow-[0_24px_50px_-32px_rgba(15,118,110,0.45)]"
-                        : "border-slate-200 bg-slate-50/80",
+                        ? "border-brand/30 bg-brand/[0.04] shadow-glow"
+                        : "border-slate-200/80 bg-slate-50/60",
                     )}
                   >
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand">
                       {plan.name}
                     </p>
-                    <p className="mt-3 text-4xl font-black tracking-[-0.04em] text-ink">
-                      Rs. {price}
+                    <p className="mt-2 text-3xl font-extrabold tracking-tight text-ink">
+                      ₹{price}
                     </p>
-                    <p className="mt-2 text-sm text-slate-500">
+                    <p className="mt-1 text-xs text-slate-500">
                       {interval === "monthly"
                         ? "Billed every month"
-                        : "Billed yearly with 2 months off"}
+                        : "Billed yearly · 2 months off"}
                     </p>
-                    <div className="mt-5 space-y-2 text-sm text-slate-600">
+                    <div className="mt-4 space-y-1.5 text-sm text-slate-600">
                       <p>
                         {plan.clientLimit === null
                           ? "Unlimited active review links"
@@ -275,10 +301,10 @@ export function BillingPageClient({
                             }`}
                       </p>
                       <p>{plan.description}</p>
-                      <p>Auto-renew powered by Cashfree subscriptions</p>
                     </div>
                     <Button
-                      className="mt-6 w-full"
+                      className="mt-5 w-full"
+                      size="sm"
                       variant={isCurrent ? "secondary" : "primary"}
                       disabled={isPending || !cashfreeConfigured || !hasValidPhone}
                       onClick={() => startCheckout(plan.tier)}
@@ -291,7 +317,7 @@ export function BillingPageClient({
             </div>
 
             {feedback ? (
-              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
                 {feedback}
               </div>
             ) : null}

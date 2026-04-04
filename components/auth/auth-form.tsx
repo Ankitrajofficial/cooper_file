@@ -61,115 +61,149 @@ export function AuthForm({ mode }: AuthFormProps) {
   }
 
   return (
-    <div className="w-full max-w-md rounded-[2rem] border border-white/50 bg-white/80 p-8 shadow-[0_35px_90px_-45px_rgba(15,23,42,0.55)] backdrop-blur-2xl">
-      <div className="rounded-[1.5rem] bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white shadow-[0_30px_70px_-35px_rgba(15,23,42,0.9)]">
-        <div className="flex items-center gap-3">
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_14px_30px_-16px_rgba(15,23,42,0.55)]">
-            <Image
-              src="/review-machine-logo.png"
-              alt="Review Machine logo"
-              width={56}
-              height={56}
-              className="h-14 w-14 object-cover"
-              priority
-            />
-          </div>
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-light">
-              Review Machine
-            </p>
-            <p className="text-xs text-slate-300">
-              AI Review Funnel
-            </p>
-          </div>
-        </div>
-        <h1 className="mt-3 text-3xl font-black tracking-[-0.03em]">
-          {isLogin ? "Welcome back" : "Start getting more reviews"}
-        </h1>
-        <p className="mt-3 text-sm leading-7 text-slate-300">
-          {isLogin
-            ? "Sign in to manage premium review funnels for every client."
-            : "Create your account and launch a polished AI-powered review system in minutes."}
-        </p>
-        <div className="mt-5 space-y-3">
-          {benefitBullets.map((item) => (
-            <div key={item} className="flex items-center gap-3 text-sm text-slate-200">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs">
-                +
-              </span>
-              {item}
+    <div className="w-full max-w-md">
+      {/* Top branded card */}
+      <div className="hero-gradient relative overflow-hidden rounded-t-2xl border border-white/[0.06] p-6 text-white">
+        <div className="absolute inset-0 premium-grid opacity-20" />
+        <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-brand/10 blur-[60px]" />
+
+        <div className="relative">
+          <div className="flex items-center gap-3">
+            <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950 shadow-lg">
+              <Image
+                src="/review-machine-logo.png"
+                alt="Review Machine logo"
+                width={48}
+                height={48}
+                className="h-11 w-11 object-cover"
+                priority
+              />
             </div>
-          ))}
+            <div>
+              <p className="text-sm font-bold tracking-tight text-white">
+                Review Machine
+              </p>
+              <p className="text-[11px] text-slate-400">
+                AI Review Funnel
+              </p>
+            </div>
+          </div>
+          <h1 className="mt-5 text-2xl font-extrabold tracking-tight">
+            {isLogin ? "Welcome back" : "Start getting more reviews"}
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            {isLogin
+              ? "Sign in to manage premium review funnels for every client."
+              : "Create your account and launch a polished AI-powered review system in minutes."}
+          </p>
+          <div className="mt-4 space-y-2">
+            {benefitBullets.map((item) => (
+              <div key={item} className="flex items-center gap-2.5 text-sm text-slate-300">
+                <svg
+                  className="h-4 w-4 shrink-0 text-brand-muted"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-        <Input
-          label="Email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="owner@business.com"
-          required
-        />
-        <Input
-          label="Password"
-          type="password"
-          autoComplete={isLogin ? "current-password" : "new-password"}
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Minimum 8 characters"
-          required
-        />
+      {/* Form card */}
+      <div className="rounded-b-2xl border border-t-0 border-slate-200/80 bg-white p-6 shadow-panel-lg">
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="owner@business.com"
+            required
+          />
+          <Input
+            label="Password"
+            type="password"
+            autoComplete={isLogin ? "current-password" : "new-password"}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Minimum 8 characters"
+            required
+          />
 
-        {visibleError ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {visibleError}
-          </div>
-        ) : null}
+          {visibleError ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {visibleError}
+            </div>
+          ) : null}
 
-        <Button type="submit" fullWidth disabled={isPending}>
-          {isPending
-            ? isLogin
-              ? "Signing in..."
-              : "Creating account..."
-            : isLogin
-              ? "Login"
-              : "Sign up"}
-        </Button>
-        <p className="text-center text-xs font-medium text-slate-500">
-          Takes 30 seconds. No complicated setup.
-        </p>
-      </form>
+          <Button type="submit" fullWidth disabled={isPending}>
+            {isPending
+              ? isLogin
+                ? "Signing in..."
+                : "Creating account..."
+              : isLogin
+                ? "Login"
+                : "Sign up"}
+          </Button>
+          <p className="text-center text-xs text-slate-500">
+            Takes 30 seconds · No complicated setup
+          </p>
+        </form>
 
-      <div className="my-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-          or
-        </span>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400">
+            or
+          </span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
 
-      <Link
-        href="/api/auth/google"
-        className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 shadow-[0_14px_30px_-20px_rgba(15,23,42,0.3)] transition duration-200 hover:-translate-y-0.5 hover:from-white hover:to-white"
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold text-slate-700 shadow-sm">
-          G
-        </span>
-        {isLogin ? "Continue with Google" : "Sign up with Google"}
-      </Link>
-
-      <p className="mt-6 text-sm text-slate-600">
-        {isLogin ? "Need an account?" : "Already have an account?"}{" "}
         <Link
-          href={isLogin ? "/signup" : "/login"}
-          className="font-semibold text-brand transition hover:text-brand-dark"
+          href="/api/auth/google"
+          className="card-hover inline-flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-card transition-all duration-200 hover:shadow-card-hover"
         >
-          {isLogin ? "Sign up" : "Login"}
+          <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335"
+            />
+          </svg>
+          {isLogin ? "Continue with Google" : "Sign up with Google"}
         </Link>
-      </p>
+
+        <p className="mt-5 text-center text-sm text-slate-600">
+          {isLogin ? "Need an account?" : "Already have an account?"}{" "}
+          <Link
+            href={isLogin ? "/signup" : "/login"}
+            className="font-semibold text-brand transition hover:text-brand-dark"
+          >
+            {isLogin ? "Sign up" : "Login"}
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
