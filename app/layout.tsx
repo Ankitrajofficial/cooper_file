@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Review Machine — AI Review Funnels for Local Businesses",
   description:
-    "Generate high-converting Google review scripts with AI, share polished review pages, and manage multiple clients from one premium dashboard. Used by 500+ businesses.",
+    "Help local businesses collect more Google reviews with one-click curated review pages designed to improve trust, local SEO, and Google profile visibility.",
   keywords: [
     "Google reviews",
     "AI review generator",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Review Machine — AI Review Funnels for Local Businesses",
     description:
-      "Turn happy customers into 5-star reviews automatically with AI-powered review funnels.",
+      "Turn happy customers into curated Google reviews that strengthen local SEO and Google profile visibility.",
     type: "website",
   },
 };

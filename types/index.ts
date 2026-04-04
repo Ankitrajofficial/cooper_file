@@ -126,7 +126,9 @@ export type BillingPlan = {
   monthlyPriceInr: number;
   yearlyPriceInr: number;
   clientLimit: number | null;
+  reviewsPerLink: number | null;
   description: string;
+  highlights: string[];
 };
 
 export type BillingSummary = {

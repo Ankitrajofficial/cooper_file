@@ -41,16 +41,17 @@ export function PublicReviewBoard({
                 Review {client.businessName}
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-400">
-                Pick any script below, copy it instantly, then we&apos;ll open
-                the Google review form for you in a new tab. Scripts rotate
-                automatically so repeat visitors see fresh options.
+                Pick any curated review below, copy it instantly, and we&apos;ll
+                open the Google review form for you in a new tab. This one-click
+                flow makes it easier for customers to leave natural reviews that
+                help this business grow its Google profile.
               </p>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
               {[
-                { step: "1", text: "Tap any review card that fits your experience" },
-                { step: "2", text: "The review text will copy automatically" },
-                { step: "3", text: "Paste it on Google, adjust if needed, and submit" },
+                { step: "1", text: "Tap the curated review that best matches your experience" },
+                { step: "2", text: "The review copies instantly and Google opens right away" },
+                { step: "3", text: "Paste on Google, personalize if you want, and submit" },
               ].map((item) => (
                 <div
                   key={item.step}
@@ -75,7 +76,7 @@ export function PublicReviewBoard({
                 <div>
                   <h2 className="text-xl font-bold text-ink">{group.category}</h2>
                   <p className="text-sm text-slate-500">
-                    Natural copy-ready scripts for this topic.
+                    Curated copy-ready reviews for this topic.
                   </p>
                 </div>
                 <Badge variant="slate">{group.reviews.length} reviews</Badge>

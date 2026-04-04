@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, toErrorMessage } from "@/lib/utils";
@@ -11,8 +11,8 @@ import { type DashboardClient } from "@/types";
 export function ClientCard({ client }: { client: DashboardClient }) {
   const router = useRouter();
   const [feedback, setFeedback] = useState("");
-  const [deletePending, setDeletePending] = useState(false);
-  const [generatePending, setGeneratePending] = useState(false);
+  const [deletePending, startDeleteTransition] = useTransition();
+  const [generatePending, startGenerateTransition] = useTransition();
 
   async function handleDelete() {
     if (!window.confirm(`Delete ${client.businessName} and all reviews?`)) {
@@ -20,53 +20,51 @@ export function ClientCard({ client }: { client: DashboardClient }) {
     }
 
     setFeedback("");
-    setDeletePending(true);
+    startDeleteTransition(async () => {
+      try {
+        const response = await fetch(`/api/clients/${client.id}`, {
+          method: "DELETE",
+        });
 
-    try {
-      const response = await fetch(`/api/clients/${client.id}`, {
-        method: "DELETE",
-      });
+        const payload = (await response.json()) as { error?: string };
 
-      const payload = (await response.json()) as { error?: string };
+        if (!response.ok) {
+          throw new Error(payload.error || "Failed to delete client.");
+        }
 
-      if (!response.ok) {
-        throw new Error(payload.error || "Failed to delete client.");
+        router.refresh();
+      } catch (error) {
+        setFeedback(toErrorMessage(error));
       }
-
-      router.refresh();
-    } catch (error) {
-      setFeedback(toErrorMessage(error));
-      setDeletePending(false);
-    }
+    });
   }
 
   async function handleGenerateReviews() {
     setFeedback("");
-    setGeneratePending(true);
+    startGenerateTransition(async () => {
+      try {
+        const response = await fetch(
+          `/api/clients/${client.id}/generate-reviews`,
+          {
+            method: "POST",
+          },
+        );
 
-    try {
-      const response = await fetch(
-        `/api/clients/${client.id}/generate-reviews`,
-        {
-          method: "POST",
-        },
-      );
+        const payload = (await response.json()) as {
+          error?: string;
+          message?: string;
+        };
 
-      const payload = (await response.json()) as {
-        error?: string;
-        message?: string;
-      };
+        if (!response.ok) {
+          throw new Error(payload.error || "Failed to generate reviews.");
+        }
 
-      if (!response.ok) {
-        throw new Error(payload.error || "Failed to generate reviews.");
+        setFeedback(payload.message || "Reviews generated successfully.");
+        router.refresh();
+      } catch (error) {
+        setFeedback(toErrorMessage(error));
       }
-
-      setFeedback(payload.message || "Reviews generated successfully.");
-      router.refresh();
-    } catch (error) {
-      setFeedback(toErrorMessage(error));
-      setGeneratePending(false);
-    }
+    });
   }
 
   async function handleCopyLink() {

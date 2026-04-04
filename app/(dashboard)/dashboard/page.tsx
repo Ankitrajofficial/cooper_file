@@ -13,6 +13,10 @@ export default async function DashboardPage() {
   const clients = await listClientsForUser(user.userId);
   const totalReviews = clients.reduce((sum, client) => sum + client.reviewCount, 0);
   const totalClicks = clients.reduce((sum, client) => sum + client.clickCount, 0);
+  const planCapacityLabel =
+    billing.clientLimit === 0
+      ? "Billing needed"
+      : `${billing.activeClientCount}/${getClientLimitLabel(billing.clientLimit)}`;
 
   return (
     <div className="space-y-6">
@@ -92,7 +96,7 @@ export default async function DashboardPage() {
           { label: "Outbound clicks", value: totalClicks, color: "text-violet-600" },
           {
             label: "Plan capacity",
-            value: `${billing.activeClientCount}/${getClientLimitLabel(billing.clientLimit)}`,
+            value: planCapacityLabel,
             color: "text-amber-600",
           },
         ].map((stat) => (

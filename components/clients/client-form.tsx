@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +35,7 @@ export function ClientForm({
   const router = useRouter();
   const [form, setForm] = useState<ClientFormInput>(initialData);
   const [error, setError] = useState("");
-  const [isPending, setIsPending] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   function updateField<K extends keyof ClientFormInput>(
     key: K,
@@ -47,34 +47,34 @@ export function ClientForm({
     }));
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setIsPending(true);
 
-    try {
-      const response = await fetch(
-        mode === "create" ? "/api/clients" : `/api/clients/${clientId}`,
-        {
-          method: mode === "create" ? "POST" : "PATCH",
-          headers: {
-            "Content-Type": "application/json",
+    startTransition(async () => {
+      try {
+        const response = await fetch(
+          mode === "create" ? "/api/clients" : `/api/clients/${clientId}`,
+          {
+            method: mode === "create" ? "POST" : "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(form),
           },
-          body: JSON.stringify(form),
-        },
-      );
+        );
 
-      const payload = (await response.json()) as { error?: string };
+        const payload = (await response.json()) as { error?: string };
 
-      if (!response.ok) {
-        throw new Error(payload.error || "Could not save client.");
+        if (!response.ok) {
+          throw new Error(payload.error || "Could not save client.");
+        }
+
+        router.replace("/dashboard");
+      } catch (submissionError) {
+        setError(toErrorMessage(submissionError));
       }
-
-      router.replace("/dashboard");
-    } catch (submissionError) {
-      setError(toErrorMessage(submissionError));
-      setIsPending(false);
-    }
+    });
   }
 
   return (

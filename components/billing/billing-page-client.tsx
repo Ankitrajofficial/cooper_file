@@ -1,9 +1,10 @@
 "use client";
 
 import Script from "next/script";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getReviewCapacityLabel } from "@/lib/billing";
 import { cn, toErrorMessage } from "@/lib/utils";
 import { type BillingSummary, type SubscriptionTier } from "@/types";
 
@@ -15,7 +16,9 @@ type BillingPageClientProps = {
     monthlyPriceInr: number;
     yearlyPriceInr: number;
     clientLimit: number | null;
+    reviewsPerLink: number | null;
     description: string;
+    highlights: string[];
   }>;
   cashfreeMode: "sandbox" | "production";
   cashfreeConfigured: boolean;
@@ -142,11 +145,12 @@ export function BillingPageClient({
                 Billing & Access
               </p>
               <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
-                Control link expiry, plan limits, and autopay.
+                Control review-link limits, curated review capacity, and autopay.
               </h1>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Cashfree powers the subscription flow. Once active, your account
-                can create review links within the allowed tier limit.
+                Cashfree powers the subscription flow. Each plan controls how
+                many active review links you can run and how many curated Google
+                reviews each link can hold.
               </p>
             </div>
 
@@ -307,6 +311,7 @@ export function BillingPageClient({
                               plan.clientLimit === 1 ? "link" : "links"
                             }`}
                       </p>
+                      <p>{getReviewCapacityLabel(plan.reviewsPerLink)}</p>
                       <p>{plan.description}</p>
                     </div>
                     <Button

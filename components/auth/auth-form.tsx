@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toErrorMessage } from "@/lib/utils";
@@ -18,45 +18,45 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isPending, setIsPending] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const isLogin = mode === "login";
   const oauthError = searchParams.get("error");
   const visibleError = error || oauthError || "";
   const benefitBullets = [
-    "Launch your first review funnel in minutes",
-    "Generate premium AI review scripts instantly",
-    "Share one clean page customers can actually use",
+    "Launch your first Google review funnel in minutes",
+    "Create curated reviews that support local SEO",
+    "Share one-click review pages customers can actually use",
   ];
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setIsPending(true);
 
-    try {
-      const response = await fetch(`/api/auth/${mode}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/auth/${mode}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        });
 
-      const payload = (await response.json()) as { error?: string };
+        const payload = (await response.json()) as { error?: string };
 
-      if (!response.ok) {
-        throw new Error(payload.error || "Authentication failed.");
+        if (!response.ok) {
+          throw new Error(payload.error || "Authentication failed.");
+        }
+
+        router.replace("/dashboard");
+      } catch (submissionError) {
+        setError(toErrorMessage(submissionError));
       }
-
-      router.replace("/dashboard");
-    } catch (submissionError) {
-      setError(toErrorMessage(submissionError));
-      setIsPending(false);
-    }
+    });
   }
 
   return (

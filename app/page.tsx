@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { BILLING_PLANS, formatInr } from "@/lib/billing";
+import {
+  BILLING_PLANS,
+  formatInr,
+  getReviewCapacityLabel,
+} from "@/lib/billing";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { Button } from "@/components/ui/button";
@@ -15,9 +19,9 @@ const featureCards = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
       </svg>
     ),
-    title: "AI Review Scripts",
+    title: "Curated Google Reviews",
     benefit:
-      "Generate fresh, high-intent Google review copy tailored to each business and location.",
+      "Every curated review option is written to help businesses earn more natural Google reviews that support ranking, trust, and local SEO.",
   },
   {
     icon: (
@@ -25,9 +29,9 @@ const featureCards = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.193-5.193a4.5 4.5 0 00-1.242-7.244l4.5-4.5a4.5 4.5 0 016.364 6.364l-1.757 1.757" />
       </svg>
     ),
-    title: "Shareable Review Pages",
+    title: "One-Click Review Flow",
     benefit:
-      "Send one clean page that makes it effortless for happy customers to leave a review.",
+      "Customers tap once, copy a ready review instantly, and land on the Google review form without friction.",
   },
   {
     icon: (
@@ -35,9 +39,9 @@ const featureCards = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
       </svg>
     ),
-    title: "SEO-Weighted Content",
+    title: "Google Profile Growth",
     benefit:
-      "Create natural scripts that reinforce local keywords without sounding robotic.",
+      "Better reviews on a Google Business Profile can improve local visibility, keyword relevance, and the chances of winning more business.",
   },
   {
     icon: (
@@ -45,9 +49,9 @@ const featureCards = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
       </svg>
     ),
-    title: "Multi-Client Control",
+    title: "Scalable Review Banks",
     benefit:
-      "Manage every property, clinic, or brand from one premium dashboard.",
+      "Choose a plan based on how many active review links you need and how many curated reviews each link should carry.",
   },
 ];
 
@@ -55,19 +59,19 @@ const steps = [
   {
     step: "01",
     title: "Add your business",
-    text: "Create a client, choose the sector, and paste the Google review link.",
+    text: "Create a client, choose the sector, and connect the Google review link for that business profile.",
     color: "from-brand/20 to-cyan-500/10",
   },
   {
     step: "02",
-    title: "Generate fresh scripts",
-    text: "AI creates a rotating bank of conversion-ready, locally optimized review options.",
+    title: "Generate curated review banks",
+    text: "Build a large bank of natural Google review options designed to help the business rank better and look more trustworthy.",
     color: "from-cyan-500/15 to-blue-500/10",
   },
   {
     step: "03",
-    title: "Share and collect reviews",
-    text: "Send your page to customers so they can copy a script and post in seconds.",
+    title: "Share one-click review links",
+    text: "Customers open the page, choose a curated review, copy it in one click, and get pushed straight to Google.",
     color: "from-blue-500/15 to-violet-500/10",
   },
 ];
@@ -94,24 +98,6 @@ const testimonials = [
     initials: "MA",
   },
 ];
-
-const planHighlights = {
-  tier_1: [
-    "1 active review link",
-    "Ideal for 1 property or clinic",
-    "Expiry follows paid period",
-  ],
-  tier_2: [
-    "5 active review links",
-    "Best for multi-property operators",
-    "Centralized client management",
-  ],
-  tier_3: [
-    "Unlimited review links",
-    "For agencies and growing portfolios",
-    "Scales with autopay renewals",
-  ],
-} as const;
 
 /* ─── Page ─── */
 
@@ -150,15 +136,16 @@ export default async function HomePage() {
 
               {/* Headline */}
               <h1 className="animate-fade-up-delay-1 max-w-[640px] text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Turn Happy Customers Into 5‑Star Reviews{" "}
-                <span className="gradient-text">Automatically</span>
+                Turn Every Happy Customer Into a{" "}
+                <span className="gradient-text">Google Ranking Signal</span>
               </h1>
 
               {/* Subheadline */}
               <p className="animate-fade-up-delay-2 max-w-lg text-lg leading-relaxed text-slate-400">
-                Create AI-powered review funnels that make it easier for
-                satisfied customers to leave polished Google reviews — helping
-                your business rank, convert, and build trust faster.
+                Every review helps strengthen a business&apos;s Google profile,
+                improve local SEO, and win more calls, visits, and bookings.
+                Customers get curated review copy and the Google review form in
+                one clean click flow.
               </p>
 
               {/* CTAs */}
@@ -179,7 +166,7 @@ export default async function HomePage() {
 
               {/* Micro trust signals */}
               <div className="animate-fade-up-delay-4 flex flex-wrap gap-4 pt-2">
-                {["No credit card required", "3-min setup", "Cancel anytime"].map(
+                {["One-click review flow", "Curated reviews per link", "Built for local SEO"].map(
                   (item) => (
                     <div
                       key={item}
@@ -230,7 +217,7 @@ export default async function HomePage() {
                   {/* Mockup stats */}
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {[
-                      { label: "Review bank", value: "40" },
+                      { label: "Review bank", value: "200" },
                       { label: "Live clicks", value: "284" },
                       { label: "Status", value: "Active" },
                     ].map((stat) => (
@@ -271,7 +258,7 @@ export default async function HomePage() {
                           {text}
                         </p>
                         <div className="mt-2 inline-flex rounded-lg bg-white/[0.06] px-2.5 py-1 text-[10px] font-semibold text-slate-300">
-                          Copy & Review
+                          1-Click Review
                         </div>
                       </div>
                     ))}
@@ -295,12 +282,13 @@ export default async function HomePage() {
                 Why it converts
               </p>
               <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
-                Built to remove friction between a happy customer and a public
-                review.
+                Built to turn customer satisfaction into better Google profile
+                visibility.
               </h2>
               <p className="mt-4 text-lg leading-relaxed text-slate-600">
-                Every block is designed to push clarity, trust, and action. No
-                clutter. No wasted clicks.
+                The system is designed to make leaving a review easy for
+                customers and valuable for businesses that want more visibility,
+                trust, and conversions from Google.
               </p>
             </div>
 
@@ -339,11 +327,11 @@ export default async function HomePage() {
                   How it works
                 </p>
                 <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-                  Three steps from setup to review collection.
+                  Three steps from business setup to higher-converting Google reviews.
                 </h2>
                 <p className="mt-4 text-lg leading-relaxed text-slate-600">
-                  Designed for operators, marketers, and owners who need a simple
-                  system that looks polished and performs reliably.
+                  Designed for owners, operators, and marketers who want a
+                  simple review engine that customers can actually use.
                 </p>
               </div>
               <div className="grid gap-4">
@@ -388,12 +376,12 @@ export default async function HomePage() {
                 Subscription plans
               </p>
               <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-                Clear pricing built around how many review links you need.
+                Pricing built around active review links and curated review capacity.
               </h2>
               <p className="mt-4 text-lg leading-relaxed text-slate-600">
-                Every plan includes AI review generation, public review funnel
-                pages, shareable client links, and Cashfree autopay support.
-                Yearly billing includes 2 months off.
+                Every plan includes one-click review pages, curated Google
+                review banks, and subscription billing. Yearly billing includes
+                2 months off.
               </p>
             </div>
 
@@ -424,10 +412,10 @@ export default async function HomePage() {
                   </p>
                   <h3 className="mt-2 text-xl font-bold">
                     {plan.clientLimit === null
-                      ? "Unlimited links"
-                      : `${plan.clientLimit} review ${
+                      ? "Unlimited links + unlimited reviews"
+                      : `${plan.clientLimit} ${
                           plan.clientLimit === 1 ? "link" : "links"
-                        }`}
+                        } + ${plan.reviewsPerLink} curated reviews`}
                   </h3>
 
                   <div className="mt-5 grid grid-cols-2 gap-3">
@@ -490,8 +478,18 @@ export default async function HomePage() {
                     {plan.description}
                   </p>
 
+                  <div
+                    className={`mt-4 rounded-xl px-4 py-3 text-sm font-medium ${
+                      plan.tier === "tier_2"
+                        ? "bg-white/[0.05] text-slate-200"
+                        : "bg-brand/[0.06] text-slate-700"
+                    }`}
+                  >
+                    {getReviewCapacityLabel(plan.reviewsPerLink)}
+                  </div>
+
                   <div className="mt-5 space-y-2">
-                    {planHighlights[plan.tier].map((item) => (
+                    {plan.highlights.map((item) => (
                       <div
                         key={item}
                         className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm ${
@@ -553,8 +551,8 @@ export default async function HomePage() {
               <p className="text-sm font-semibold uppercase tracking-[0.15em] text-brand-muted">
                 Social proof
               </p>
-              <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-                Trusted by serious local businesses.
+                <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Trusted by local businesses that want more visibility on Google.
               </h2>
             </div>
 
@@ -626,12 +624,12 @@ export default async function HomePage() {
                   Live preview
                 </p>
                 <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-                  A review funnel page your customers can actually use.
+                  A one-click review page your customers can actually use.
                 </h2>
                 <p className="mt-4 text-lg leading-relaxed text-slate-600">
-                  Clear instructions, polished script cards, and one click to
-                  copy and open Google. Simple enough for customers, premium
-                  enough for your brand.
+                  Customers choose a curated review, copy it instantly, and land
+                  on Google in one click. More completed reviews means stronger
+                  Google profile momentum for the business.
                 </p>
               </div>
 
@@ -647,12 +645,12 @@ export default async function HomePage() {
                       </h3>
                     </div>
                     <div className="hidden rounded-full bg-brand-light px-3 py-1.5 text-[11px] font-semibold text-brand-dark sm:block">
-                      Rotates fresh scripts
+                      One-click curated reviews
                     </div>
                   </div>
 
                   <div className="mt-4 grid grid-cols-3 gap-2">
-                    {["Pick a review", "Copy in one tap", "Paste on Google"].map(
+                    {["Pick a curated review", "Copy in one tap", "Post on Google"].map(
                       (step) => (
                         <div
                           key={step}
@@ -690,7 +688,7 @@ export default async function HomePage() {
                               d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                             />
                           </svg>
-                          Copy & Review
+                          1-Click Review
                         </div>
                       </div>
                     ))}
@@ -711,12 +709,13 @@ export default async function HomePage() {
               <div className="relative grid gap-10 lg:grid-cols-[1.3fr_0.7fr] lg:items-center">
                 <div>
                   <h2 className="max-w-xl text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
-                    Stop hoping customers leave reviews. Build a system that gets
-                    them.
+                    Stop hoping for better rankings. Build a review system that
+                    earns them.
                   </h2>
                   <p className="mt-4 max-w-lg text-lg leading-relaxed text-slate-400">
-                    Launch your first AI-powered review funnel in minutes and
-                    give every happy customer a faster path to posting on Google.
+                    Launch your first review link in minutes and give every
+                    satisfied customer a faster path to leaving a curated Google
+                    review that supports visibility, trust, and growth.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3 lg:justify-end">

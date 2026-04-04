@@ -12,7 +12,14 @@ export const BILLING_PLANS: BillingPlan[] = [
     monthlyPriceInr: 199,
     yearlyPriceInr: 1990,
     clientLimit: 1,
-    description: "One active review link for a single business property.",
+    reviewsPerLink: 200,
+    description:
+      "1 active review link with 200 curated Google review options built to help one business collect more ranking-focused reviews.",
+    highlights: [
+      "1 active review link",
+      "200 curated reviews on each link",
+      "Built for one business profile",
+    ],
   },
   {
     tier: "tier_2",
@@ -20,7 +27,14 @@ export const BILLING_PLANS: BillingPlan[] = [
     monthlyPriceInr: 499,
     yearlyPriceInr: 4990,
     clientLimit: 5,
-    description: "Five active review links for five different properties.",
+    reviewsPerLink: 500,
+    description:
+      "5 active review links with up to 500 curated Google review options on each link for growing multi-location businesses.",
+    highlights: [
+      "5 active review links",
+      "500 curated reviews on each link",
+      "Best for growing multi-location brands",
+    ],
   },
   {
     tier: "tier_3",
@@ -28,7 +42,14 @@ export const BILLING_PLANS: BillingPlan[] = [
     monthlyPriceInr: 999,
     yearlyPriceInr: 9990,
     clientLimit: null,
-    description: "Unlimited active review links across your portfolio.",
+    reviewsPerLink: null,
+    description:
+      "Unlimited active review links with unlimited curated Google review options per link for agencies and large portfolios.",
+    highlights: [
+      "Unlimited active review links",
+      "Unlimited curated reviews on each link",
+      "Built for agencies and large portfolios",
+    ],
   },
 ];
 
@@ -149,6 +170,14 @@ export function getClientLimitLabel(clientLimit: number | null) {
   }
 
   return clientLimit.toString();
+}
+
+export function getReviewCapacityLabel(reviewsPerLink: number | null) {
+  if (reviewsPerLink === null) {
+    return "Unlimited curated reviews per link";
+  }
+
+  return `${reviewsPerLink} curated reviews per link`;
 }
 
 export function toDateInputValue(value?: string | Date | null) {
