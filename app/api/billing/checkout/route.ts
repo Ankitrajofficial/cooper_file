@@ -4,12 +4,13 @@ import { createCashfreeSubscription } from "@/lib/services/cashfree-service";
 import { markPendingSubscriptionForUser } from "@/lib/services/billing-service";
 import { validateBillingSelection, validatePhone } from "@/lib/validators";
 import { connectToDatabase } from "@/lib/db";
+import { resolveAppOrigin } from "@/lib/request-origin";
 import User from "@/models/User";
 
 export async function POST(request: Request) {
   try {
     const session = await requireApiUser();
-    const appUrl = new URL(request.url).origin;
+    const appUrl = resolveAppOrigin(request);
     const body = (await request.json()) as {
       tier?: string;
       interval?: string;

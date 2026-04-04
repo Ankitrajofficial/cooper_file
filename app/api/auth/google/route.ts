@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { createGoogleAuthorizationUrl } from "@/lib/google-auth";
+import { resolveAppOrigin } from "@/lib/request-origin";
 
 export async function GET(request: Request) {
   try {
-    const appUrl = new URL(request.url).origin;
+    const appUrl = resolveAppOrigin(request);
     const url = await createGoogleAuthorizationUrl(appUrl);
     return NextResponse.redirect(url);
   } catch (error) {

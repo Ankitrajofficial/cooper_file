@@ -7,11 +7,12 @@ import {
   validateGoogleOauthState,
   verifyGoogleIdToken,
 } from "@/lib/google-auth";
+import { resolveAppOrigin } from "@/lib/request-origin";
 import User from "@/models/User";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const appUrl = url.origin;
+  const appUrl = resolveAppOrigin(request);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const oauthError = url.searchParams.get("error");
