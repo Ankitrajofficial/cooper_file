@@ -132,7 +132,7 @@ export async function createCashfreeSubscription(options: {
       authorization_details: {
         authorization_amount: 1,
         authorization_amount_refund: true,
-        payment_methods: ["upi", "card", "enach"],
+        payment_methods: ["upi", "card"],
       },
       subscription_meta: {
         return_url: `${normalizeAppBaseUrl(options.appUrl)}/dashboard/billing/confirm?subscription_id=${subscriptionId}`,
