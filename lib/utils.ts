@@ -98,3 +98,62 @@ export function toErrorMessage(error: unknown) {
 
   return "Something went wrong. Please try again.";
 }
+
+function copyTextWithExecCommand(value: string) {
+  if (typeof document === "undefined") {
+    return false;
+  }
+
+  const textArea = document.createElement("textarea");
+  const selection = document.getSelection();
+  const previousRange =
+    selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+  textArea.value = value;
+  textArea.setAttribute("readonly", "");
+  textArea.style.position = "fixed";
+  textArea.style.top = "0";
+  textArea.style.left = "0";
+  textArea.style.width = "1px";
+  textArea.style.height = "1px";
+  textArea.style.opacity = "0";
+  textArea.style.pointerEvents = "none";
+
+  document.body.appendChild(textArea);
+  textArea.focus({ preventScroll: true });
+  textArea.select();
+  textArea.setSelectionRange(0, value.length);
+
+  let copied = false;
+
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  }
+
+  document.body.removeChild(textArea);
+
+  if (selection) {
+    selection.removeAllRanges();
+
+    if (previousRange) {
+      selection.addRange(previousRange);
+    }
+  }
+
+  return copied;
+}
+
+export async function copyTextToClipboard(value: string) {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      return copyTextWithExecCommand(value);
+    }
+  }
+
+  return copyTextWithExecCommand(value);
+}
