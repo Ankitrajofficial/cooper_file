@@ -1,21 +1,22 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export function LogoutButton() {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  function handleLogout() {
-    startTransition(() => {
-      void (async () => {
-        await fetch("/api/auth/logout", { method: "POST" });
-        router.push("/login");
-        router.refresh();
-      })();
-    });
+  async function handleLogout() {
+    setIsPending(true);
+
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.replace("/login");
+    } catch {
+      setIsPending(false);
+    }
   }
 
   return (
@@ -24,4 +25,3 @@ export function LogoutButton() {
     </Button>
   );
 }
-

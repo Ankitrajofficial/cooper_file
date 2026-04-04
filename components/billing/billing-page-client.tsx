@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useMemo, useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, toErrorMessage } from "@/lib/utils";
@@ -30,38 +30,36 @@ export function BillingPageClient({
   const [interval, setInterval] = useState(summary.interval || "monthly");
   const [phone, setPhone] = useState(summary.phone || "");
   const [feedback, setFeedback] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
   const hasValidPhone = /^\d{10}$/.test(phone.trim());
-  const activePlan = useMemo(
-    () => plans.find((plan) => plan.tier === summary.tier) || null,
-    [plans, summary.tier],
-  );
+  const activePlan = plans.find((plan) => plan.tier === summary.tier) || null;
+  const isBusy = isSavingPhone || isStartingCheckout;
 
   async function savePhone() {
     setFeedback("");
+    setIsSavingPhone(true);
 
-    startTransition(() => {
-      void (async () => {
-        try {
-          const response = await fetch("/api/billing/contact", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ phone }),
-          });
-          const payload = (await response.json()) as { error?: string };
+    try {
+      const response = await fetch("/api/billing/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phone }),
+      });
+      const payload = (await response.json()) as { error?: string };
 
-          if (!response.ok) {
-            throw new Error(payload.error || "Unable to save phone number.");
-          }
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to save phone number.");
+      }
 
-          setFeedback("Billing phone number updated.");
-        } catch (error) {
-          setFeedback(toErrorMessage(error));
-        }
-      })();
-    });
+      setFeedback("Billing phone number updated.");
+    } catch (error) {
+      setFeedback(toErrorMessage(error));
+    } finally {
+      setIsSavingPhone(false);
+    }
   }
 
   async function startCheckout(tier: Exclude<SubscriptionTier, "none">) {
@@ -76,61 +74,59 @@ export function BillingPageClient({
       setFeedback("Cashfree checkout is still loading. Try again in a moment.");
       return;
     }
+    setIsStartingCheckout(true);
 
-    startTransition(() => {
-      void (async () => {
+    try {
+      const response = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tier,
+          interval,
+          phone,
+        }),
+      });
+      const rawText = await response.text();
+      const payload = (() => {
         try {
-          const response = await fetch("/api/billing/checkout", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              tier,
-              interval,
-              phone,
-            }),
-          });
-          const rawText = await response.text();
-          const payload = (() => {
-            try {
-              return JSON.parse(rawText) as {
-                error?: string;
-                subsSessionId?: string;
-              };
-            } catch {
-              return {};
-            }
-          })();
-
-          if (!response.ok || !payload.subsSessionId) {
-            throw new Error(
-              payload.error ||
-                rawText ||
-                "Unable to start Cashfree checkout.",
-            );
-          }
-
-          const cashfreeFactory = window.Cashfree;
-
-          if (!cashfreeFactory) {
-            throw new Error("Cashfree checkout is unavailable right now.");
-          }
-
-          const cashfree = cashfreeFactory({ mode: cashfreeMode });
-          const result = await cashfree.subscriptionsCheckout({
-            subsSessionId: payload.subsSessionId,
-            redirectTarget: "_self",
-          });
-
-          if (result.error?.message) {
-            throw new Error(result.error.message);
-          }
-        } catch (error) {
-          setFeedback(toErrorMessage(error));
+          return JSON.parse(rawText) as {
+            error?: string;
+            subsSessionId?: string;
+          };
+        } catch {
+          return {};
         }
       })();
-    });
+
+      if (!response.ok || !payload.subsSessionId) {
+        throw new Error(
+          payload.error ||
+            rawText ||
+            "Unable to start Cashfree checkout.",
+        );
+      }
+
+      const cashfreeFactory = window.Cashfree;
+
+      if (!cashfreeFactory) {
+        throw new Error("Cashfree checkout is unavailable right now.");
+      }
+
+      const cashfree = cashfreeFactory({ mode: cashfreeMode });
+      const result = await cashfree.subscriptionsCheckout({
+        subsSessionId: payload.subsSessionId,
+        redirectTarget: "_self",
+      });
+
+      if (result.error?.message) {
+        throw new Error(result.error.message);
+      }
+    } catch (error) {
+      setFeedback(toErrorMessage(error));
+      setIsStartingCheckout(false);
+    }
   }
 
   return (
@@ -232,8 +228,8 @@ export function BillingPageClient({
                 inputMode="numeric"
                 maxLength={10}
               />
-              <Button size="sm" onClick={savePhone} disabled={isPending}>
-                Save phone
+              <Button size="sm" onClick={savePhone} disabled={isBusy}>
+                {isSavingPhone ? "Saving..." : "Save phone"}
               </Button>
             </div>
           </div>
@@ -317,10 +313,14 @@ export function BillingPageClient({
                       className="mt-5 w-full"
                       size="sm"
                       variant={isCurrent ? "secondary" : "primary"}
-                      disabled={isPending || !cashfreeConfigured || !hasValidPhone}
+                      disabled={isBusy || !cashfreeConfigured || !hasValidPhone}
                       onClick={() => startCheckout(plan.tier)}
                     >
-                      {isCurrent ? "Current plan" : "Start autopay"}
+                      {isCurrent
+                        ? "Current plan"
+                        : isStartingCheckout
+                          ? "Opening checkout..."
+                          : "Start autopay"}
                     </Button>
                   </article>
                 );

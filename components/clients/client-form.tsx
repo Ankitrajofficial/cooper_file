@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +35,7 @@ export function ClientForm({
   const router = useRouter();
   const [form, setForm] = useState<ClientFormInput>(initialData);
   const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
   function updateField<K extends keyof ClientFormInput>(
     key: K,
@@ -50,6 +50,7 @@ export function ClientForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setIsPending(true);
 
     try {
       const response = await fetch(
@@ -69,12 +70,10 @@ export function ClientForm({
         throw new Error(payload.error || "Could not save client.");
       }
 
-      startTransition(() => {
-        router.push("/dashboard");
-        router.refresh();
-      });
+      router.replace("/dashboard");
     } catch (submissionError) {
       setError(toErrorMessage(submissionError));
+      setIsPending(false);
     }
   }
 

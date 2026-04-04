@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-
 :root {
   color-scheme: light;
   --brand: 13 148 136;
@@ -18,7 +16,6 @@ html {
 
 body {
   min-height: 100vh;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #0f172a;
   font-feature-settings: "ss01" on, "cv11" on, "cv03" on;
   background: #f8fafc;

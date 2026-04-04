@@ -28,7 +28,6 @@ export function BrandLogo({
             "object-cover",
             compact ? "h-10 w-10" : "h-11 w-11 sm:h-12 sm:w-12",
           )}
-          priority
         />
       </div>
       <div>

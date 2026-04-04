@@ -19,6 +19,7 @@ export function ReviewCard({
 }: ReviewCardProps) {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const [isOpening, setIsOpening] = useState(false);
 
   useEffect(() => {
     if (!copied) {
@@ -32,6 +33,8 @@ export function ReviewCard({
 
   async function handleCopyAndOpen() {
     setError("");
+    setIsOpening(true);
+    window.open(googleReviewLink, "_blank", "noopener,noreferrer");
 
     try {
       await navigator.clipboard.writeText(text);
@@ -43,9 +46,10 @@ export function ReviewCard({
         },
         body: JSON.stringify({ reviewId }),
       });
-      window.open(googleReviewLink, "_blank", "noopener,noreferrer");
     } catch (copyError) {
       setError(toErrorMessage(copyError));
+    } finally {
+      setIsOpening(false);
     }
   }
 
@@ -53,7 +57,7 @@ export function ReviewCard({
     <div className="card-hover rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
       <p className="text-sm leading-relaxed text-slate-700">{text}</p>
       <div className="mt-4 flex items-center justify-between gap-3">
-        <Button size="sm" onClick={handleCopyAndOpen}>
+        <Button size="sm" onClick={handleCopyAndOpen} disabled={isOpening}>
           {copied ? (
             <>
               <svg
@@ -71,6 +75,8 @@ export function ReviewCard({
               </svg>
               Copied
             </>
+          ) : isOpening ? (
+            "Opening..."
           ) : (
             <>
               <svg

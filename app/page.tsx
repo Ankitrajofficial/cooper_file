@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { BILLING_PLANS, formatInr } from "@/lib/billing";
 import { SiteHeader } from "@/components/site/site-header";
+import { SiteFooter } from "@/components/site/site-footer";
 import { Button } from "@/components/ui/button";
 
 /* ─── Data ─── */
@@ -737,34 +738,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ─── FOOTER ─── */}
-        <footer className="border-t border-slate-200/80 px-4 py-10 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-slate-500">
-              © {new Date().getFullYear()} Review Machine. All rights reserved.
-            </p>
-            <div className="flex gap-6">
-              <a
-                href="#features"
-                className="text-sm text-slate-500 transition hover:text-brand"
-              >
-                Features
-              </a>
-              <a
-                href="#pricing"
-                className="text-sm text-slate-500 transition hover:text-brand"
-              >
-                Pricing
-              </a>
-              <Link
-                href="/login"
-                className="text-sm text-slate-500 transition hover:text-brand"
-              >
-                Login
-              </Link>
-            </div>
-          </div>
-        </footer>
+        <SiteFooter />
       </main>
     </div>
   );

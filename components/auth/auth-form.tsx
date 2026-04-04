@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toErrorMessage } from "@/lib/utils";
@@ -18,7 +18,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
   const isLogin = mode === "login";
   const oauthError = searchParams.get("error");
@@ -32,6 +32,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setIsPending(true);
 
     try {
       const response = await fetch(`/api/auth/${mode}`, {
@@ -51,12 +52,10 @@ export function AuthForm({ mode }: AuthFormProps) {
         throw new Error(payload.error || "Authentication failed.");
       }
 
-      startTransition(() => {
-        router.push("/dashboard");
-        router.refresh();
-      });
+      router.replace("/dashboard");
     } catch (submissionError) {
       setError(toErrorMessage(submissionError));
+      setIsPending(false);
     }
   }
 
