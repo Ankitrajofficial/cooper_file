@@ -11,6 +11,9 @@ import { type BillingInterval, type SubscriptionTier } from "@/types";
 type BillingConfirmPageProps = {
   searchParams: Promise<{
     subscription_id?: string;
+    cf_subscription_id?: string;
+    cf_status?: string;
+    cf_message?: string;
   }>;
 };
 
@@ -18,7 +21,11 @@ export default async function BillingConfirmPage({
   searchParams,
 }: BillingConfirmPageProps) {
   const user = await requireClientUser();
-  const { subscription_id: subscriptionId = "" } = await searchParams;
+  const {
+    subscription_id: subscriptionId = "",
+    cf_status: cashfreeStatus = "",
+    cf_message: cashfreeMessage = "",
+  } = await searchParams;
 
   if (!subscriptionId) {
     return (
@@ -127,6 +134,11 @@ export default async function BillingConfirmPage({
           Current Cashfree status: {subscription.subscription_status}. Refresh this page
           in a moment or check the billing page again.
         </p>
+        {cashfreeMessage ? (
+          <p className="mt-3 text-sm text-slate-500">
+            Cashfree message: {cashfreeMessage}
+          </p>
+        ) : null}
         <Link
           href="/dashboard/billing"
           className="mt-6 inline-flex rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark"
@@ -147,6 +159,11 @@ export default async function BillingConfirmPage({
         <p className="mt-3 max-w-2xl text-slate-600">
           {error instanceof Error ? error.message : "Unknown billing error."}
         </p>
+        {cashfreeStatus ? (
+          <p className="mt-3 text-sm text-slate-500">
+            Last Cashfree status received: {cashfreeStatus}
+          </p>
+        ) : null}
         <Link
           href="/dashboard/billing"
           className="mt-6 inline-flex rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark"

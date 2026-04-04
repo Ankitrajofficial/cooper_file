@@ -9,16 +9,6 @@ import {
 import { verifyCashfreeWebhookSignature } from "@/lib/services/cashfree-service";
 import { type BillingInterval, type SubscriptionTier } from "@/types";
 
-function getNestedValue<T = unknown>(source: Record<string, any>, path: string[]) {
-  let current: any = source;
-
-  for (const key of path) {
-    current = current?.[key];
-  }
-
-  return current as T;
-}
-
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-webhook-signature") || "";
@@ -97,6 +87,28 @@ export async function POST(request: Request) {
       const remoteStatus = String(
         subscriptionDetails.subscription_status || data.subscription_status || "INITIALIZED",
       );
+
+      if (remoteStatus === "ACTIVE") {
+        const tier =
+          ((user.pendingSubscriptionTier || user.subscriptionTier) as SubscriptionTier) === "none"
+            ? "tier_1"
+            : (user.pendingSubscriptionTier || user.subscriptionTier);
+        const interval = (user.pendingSubscriptionInterval ||
+          user.subscriptionInterval ||
+          "monthly") as BillingInterval;
+
+        await applySuccessfulSubscriptionForUser({
+          userId: user._id.toString(),
+          tier: tier as Exclude<SubscriptionTier, "none">,
+          interval,
+          cashfreeSubscriptionId: subscriptionId,
+          cashfreeCfSubscriptionId: cfSubscriptionId,
+          cashfreeSubscriptionStatus: remoteStatus,
+          preserveCurrentPeriod: true,
+        });
+
+        return NextResponse.json({ received: true });
+      }
 
       await updateSubscriptionStateByCashfreeId({
         cashfreeSubscriptionId: subscriptionId,

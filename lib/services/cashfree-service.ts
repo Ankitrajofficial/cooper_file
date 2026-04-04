@@ -51,6 +51,14 @@ function normalizeAppBaseUrl(appUrl?: string) {
   return fallback.replace(/\/$/, "");
 }
 
+function buildBillingReturnUrl(appUrl?: string) {
+  return `${normalizeAppBaseUrl(appUrl)}/api/billing/return`;
+}
+
+function getCashfreeWebhookSecret() {
+  return process.env.CASHFREE_WEBHOOK_SECRET || process.env.CASHFREE_SECRET_KEY || "";
+}
+
 async function cashfreeRequest<T>(path: string, init?: RequestInit) {
   const response = await fetch(`${getCashfreeBaseUrl()}${path}`, {
     ...init,
@@ -100,7 +108,7 @@ export async function createCashfreeSubscription(options: {
   const subscriptionId = `subs_${options.userId.slice(-8)}_${options.tier}_${options.interval}_${Date.now()}`;
   const now = new Date();
   const sessionExpiry = new Date(now.getTime() + 30 * 60 * 1000);
-  const firstChargeTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const firstChargeTime = new Date(now.getTime() + 5 * 60 * 1000);
   const expiryTime = new Date(now.getTime() + 10 * 365 * 24 * 60 * 60 * 1000);
   const intervalType = options.interval === "monthly" ? "MONTH" : "YEAR";
 
@@ -135,7 +143,7 @@ export async function createCashfreeSubscription(options: {
         payment_methods: ["upi", "card"],
       },
       subscription_meta: {
-        return_url: `${normalizeAppBaseUrl(options.appUrl)}/dashboard/billing/confirm?subscription_id=${subscriptionId}`,
+        return_url: `${buildBillingReturnUrl(options.appUrl)}?subscription_id=${subscriptionId}`,
         notification_channel: ["EMAIL"],
         session_id_expiry: sessionExpiry.toISOString(),
       },
@@ -172,10 +180,12 @@ export function verifyCashfreeWebhookSignature(options: {
   timestamp: string;
   signature: string;
 }) {
-  const secret = process.env.CASHFREE_SECRET_KEY;
+  const secret = getCashfreeWebhookSecret();
 
   if (!secret) {
-    throw new Error("Missing CASHFREE_SECRET_KEY environment variable.");
+    throw new Error(
+      "Missing Cashfree webhook secret. Set CASHFREE_WEBHOOK_SECRET or CASHFREE_SECRET_KEY.",
+    );
   }
 
   const signedPayload = `${options.timestamp}${options.rawBody}`;
