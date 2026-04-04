@@ -108,7 +108,7 @@ export async function createCashfreeSubscription(options: {
   const subscriptionId = `subs_${options.userId.slice(-8)}_${options.tier}_${options.interval}_${Date.now()}`;
   const now = new Date();
   const sessionExpiry = new Date(now.getTime() + 30 * 60 * 1000);
-  const firstChargeTime = new Date(now.getTime() + 5 * 60 * 1000);
+  const firstChargeTime = new Date(now.getTime() + 36 * 60 * 60 * 1000);
   const expiryTime = new Date(now.getTime() + 10 * 365 * 24 * 60 * 60 * 1000);
   const intervalType = options.interval === "monthly" ? "MONTH" : "YEAR";
 
