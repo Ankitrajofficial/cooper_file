@@ -57,14 +57,21 @@ export async function POST(request: Request) {
       role,
     });
 
-    return NextResponse.json({
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        role,
+    return NextResponse.json(
+      {
+        user: {
+          id: user._id.toString(),
+          email: user.email,
+          role,
+        },
+        redirectTo: getPostLoginRedirectPath(role),
       },
-      redirectTo: getPostLoginRedirectPath(role),
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
+    );
   } catch (error) {
     return NextResponse.json(
       {

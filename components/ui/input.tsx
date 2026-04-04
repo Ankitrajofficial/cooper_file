@@ -11,15 +11,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, helperText, error, id, ...props }, ref) => (
     <label className="block space-y-1.5">
       {label ? (
-        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span className="text-sm font-medium text-[var(--on-surface-variant)]">{label}</span>
       ) : null}
       <input
         id={id}
         ref={ref}
         className={cn(
-          "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.04)] outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-brand focus:shadow-[0_0_0_3px_rgba(13,148,136,0.1)] focus:ring-0",
+          "w-full rounded-xl border-0 bg-[var(--surface-highest,#e0e3e5)] px-4 py-3 text-sm text-[var(--on-surface)] shadow-none outline-none transition-all duration-200 placeholder:text-[var(--outline)] hover:bg-[var(--surface-container)] focus:bg-[var(--surface-card)] focus:shadow-[0_0_0_2px_rgba(0,131,120,0.3)] focus:ring-0",
           error &&
-            "border-rose-300 focus:border-rose-500 focus:shadow-[0_0_0_3px_rgba(225,29,72,0.1)]",
+            "bg-rose-50 focus:shadow-[0_0_0_2px_rgba(225,29,72,0.2)]",
           className,
         )}
         {...props}
@@ -28,7 +28,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <span className="text-sm text-rose-600">{error}</span>
       ) : null}
       {!error && helperText ? (
-        <span className="text-xs text-slate-500">{helperText}</span>
+        <span className="text-xs text-[var(--on-surface-variant)]">{helperText}</span>
       ) : null}
     </label>
   ),

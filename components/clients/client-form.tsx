@@ -80,8 +80,29 @@ export function ClientForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card"
+      className="surface-card-elevated p-6"
     >
+      <div className="mb-6">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand/10 to-brand/5">
+            <svg className="h-4 w-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-9.86a4.5 4.5 0 00-6.364 0l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+            </svg>
+          </div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand">
+            {mode === "create" ? "New Review Link" : "Edit Review Link"}
+          </p>
+        </div>
+        <h2 className="mt-3 text-xl font-bold tracking-[-0.01em] text-[var(--on-surface)]">
+          {mode === "create"
+            ? "Create a new public review page"
+            : "Update this review link"}
+        </h2>
+        <p className="mt-1.5 text-sm text-[var(--on-surface-variant)]">
+          Fill in the details below. The AI will generate tailored review scripts based on the business information you provide.
+        </p>
+      </div>
+
       <div className="grid gap-5 md:grid-cols-2">
         <Input
           label="Business name"
@@ -98,7 +119,7 @@ export function ClientForm({
           required
         />
         <label className="block space-y-1.5">
-          <span className="text-sm font-medium text-slate-700">
+          <span className="text-sm font-medium text-[var(--on-surface-variant)]">
             Business sector
           </span>
           <select
@@ -109,7 +130,7 @@ export function ClientForm({
                 event.target.value as ClientFormInput["sector"],
               )
             }
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.04)] outline-none transition-all duration-200 hover:border-slate-300 focus:border-brand focus:shadow-[0_0_0_3px_rgba(13,148,136,0.1)] focus:ring-0"
+            className="w-full rounded-xl border-0 bg-[var(--surface-highest,#e0e3e5)] px-4 py-3 text-sm text-[var(--on-surface)] shadow-none outline-none transition-all duration-200 hover:bg-[var(--surface-container)] focus:bg-[var(--surface-card)] focus:shadow-[0_0_0_2px_rgba(0,131,120,0.3)] focus:ring-0"
           >
             <option value="">Auto-detect sector</option>
             {BUSINESS_SECTORS.map((sector) => (
@@ -118,7 +139,7 @@ export function ClientForm({
               </option>
             ))}
           </select>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-[var(--on-surface-variant)]">
             Choose a broad sector or keep auto-detect.
           </span>
         </label>
@@ -152,11 +173,11 @@ export function ClientForm({
             placeholder="Describe your business, ideal customers, location advantages, amenities, service style, specialties, or what makes it stand out."
             maxLength={600}
           />
-          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--on-surface-variant)]">
             <span>
               Gives the AI richer context for custom review scripts.
             </span>
-            <span>{(form.businessDescription || "").length}/600</span>
+            <span className="tabular-nums">{(form.businessDescription || "").length}/600</span>
           </div>
         </div>
         <Input
@@ -171,13 +192,19 @@ export function ClientForm({
       </div>
 
       {error ? (
-        <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="mt-5 flex items-center gap-2 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
           {error}
         </div>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-6 flex flex-wrap gap-2.5">
         <Button type="submit" disabled={isPending}>
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d={mode === "create" ? "M12 4.5v15m7.5-7.5h-15" : "M4.5 12.75l6 6 9-13.5"} />
+          </svg>
           {isPending
             ? mode === "create"
               ? "Creating..."

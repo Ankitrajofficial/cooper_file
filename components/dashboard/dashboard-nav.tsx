@@ -44,11 +44,11 @@ export function DashboardNav() {
     <>
       {/* Desktop nav */}
       <nav className="hidden lg:block">
-        <div className="rounded-xl border border-slate-200/80 bg-white p-2 shadow-card">
-          <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400">
+        <div className="surface-card overflow-hidden p-2">
+          <p className="px-3 pb-2.5 pt-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--on-surface-variant)]">
             Workspace
           </p>
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href ||
@@ -59,26 +59,40 @@ export function DashboardNav() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-150",
+                    "group flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200",
                     isActive
-                      ? "bg-brand text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-ink",
+                      ? "bg-gradient-to-br from-brand to-[#0891b2] text-white shadow-[0_2px_8px_-2px_rgba(13,148,136,0.4)]"
+                      : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-low)] hover:text-[var(--on-surface)]",
                   )}
                 >
-                  <span className={isActive ? "text-white/80" : "text-slate-400"}>
+                  <span
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-200",
+                      isActive
+                        ? "bg-white/15 text-white"
+                        : "bg-[var(--surface-container)] text-[var(--outline)] group-hover:bg-brand/10 group-hover:text-brand",
+                    )}
+                  >
                     {item.icon}
                   </span>
                   <div>
                     <p className="text-sm font-semibold">{item.label}</p>
                     <p
                       className={cn(
-                        "text-[11px]",
-                        isActive ? "text-white/70" : "text-slate-400",
+                        "text-[11px] leading-snug",
+                        isActive ? "text-white/70" : "text-[var(--outline)]",
                       )}
                     >
                       {item.description}
                     </p>
                   </div>
+                  {isActive && (
+                    <div className="ml-auto">
+                      <svg className="h-4 w-4 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </div>
+                  )}
                 </Link>
               );
             })}
@@ -88,7 +102,7 @@ export function DashboardNav() {
 
       {/* Mobile nav */}
       <nav className="lg:hidden">
-        <div className="flex gap-1.5 overflow-x-auto rounded-xl bg-slate-100 p-1">
+        <div className="flex gap-1.5 overflow-x-auto rounded-xl bg-[var(--surface-container)] p-1">
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -99,10 +113,10 @@ export function DashboardNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-all duration-150",
+                  "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-all duration-200",
                   isActive
-                    ? "bg-white text-ink shadow-sm"
-                    : "text-slate-500 hover:text-slate-700",
+                    ? "bg-white text-[var(--on-surface)] shadow-[0_1px_3px_rgba(25,28,30,0.06)]"
+                    : "text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]",
                 )}
               >
                 {item.icon}

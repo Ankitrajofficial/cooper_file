@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtVerify, SignJWT } from "jose";
+import { getRoleHomePath } from "@/lib/auth-redirect";
 import { type UserRole } from "@/types";
 
 const AUTH_COOKIE = "review_funnel_session";
@@ -102,7 +103,7 @@ export function resolveUserRole(user: { email: string; role?: string | null }): 
 }
 
 export function getPostLoginRedirectPath(role: UserRole) {
-  return role === "admin" ? "/admin" : "/dashboard";
+  return getRoleHomePath(role);
 }
 
 export async function requireUser() {

@@ -3,6 +3,8 @@ import { AuthForm } from "@/components/auth/auth-form";
 import { SiteHeader } from "@/components/site/site-header";
 import { getPostLoginRedirectPath, getSession } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export default async function SignupPage() {
   const session = await getSession();
 

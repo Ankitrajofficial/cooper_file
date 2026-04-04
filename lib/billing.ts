@@ -8,7 +8,7 @@ import {
 export const BILLING_PLANS: BillingPlan[] = [
   {
     tier: "tier_1",
-    name: "Tier 1",
+    name: "Starter",
     monthlyPriceInr: 199,
     yearlyPriceInr: 1990,
     clientLimit: 1,
@@ -23,7 +23,7 @@ export const BILLING_PLANS: BillingPlan[] = [
   },
   {
     tier: "tier_2",
-    name: "Tier 2",
+    name: "Growth",
     monthlyPriceInr: 499,
     yearlyPriceInr: 4990,
     clientLimit: 5,
@@ -38,7 +38,7 @@ export const BILLING_PLANS: BillingPlan[] = [
   },
   {
     tier: "tier_3",
-    name: "Tier 3",
+    name: "Scale",
     monthlyPriceInr: 999,
     yearlyPriceInr: 9990,
     clientLimit: null,
@@ -115,6 +115,14 @@ type SubscriptionLike = {
   subscriptionCurrentPeriodEnd?: Date | string | null;
 };
 
+function hasFutureBillingPeriod(user: SubscriptionLike) {
+  if (!user.subscriptionCurrentPeriodEnd) {
+    return false;
+  }
+
+  return new Date(user.subscriptionCurrentPeriodEnd).getTime() > Date.now();
+}
+
 export function hasActiveSubscription(user: SubscriptionLike) {
   const status = (user.subscriptionStatus || "inactive") as SubscriptionStatus;
 
@@ -122,11 +130,17 @@ export function hasActiveSubscription(user: SubscriptionLike) {
     return false;
   }
 
-  if (!user.subscriptionCurrentPeriodEnd) {
+  return hasFutureBillingPeriod(user);
+}
+
+export function hasSubscriptionAccess(user: SubscriptionLike) {
+  const status = (user.subscriptionStatus || "inactive") as SubscriptionStatus;
+
+  if (status !== "active" && status !== "cancelled") {
     return false;
   }
 
-  return new Date(user.subscriptionCurrentPeriodEnd).getTime() > Date.now();
+  return hasFutureBillingPeriod(user);
 }
 
 export function normalizeSubscriptionStatus(user: SubscriptionLike) {

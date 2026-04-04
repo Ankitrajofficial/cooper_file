@@ -13,8 +13,10 @@ type EditClientPageProps = {
 export default async function EditClientPage({ params }: EditClientPageProps) {
   const user = await requireClientUser();
   const { clientId } = await params;
-  const billing = await getBillingSummaryForUser(user.userId);
-  const client = await getClientForUser(user.userId, clientId);
+  const [billing, client] = await Promise.all([
+    getBillingSummaryForUser(user.userId),
+    getClientForUser(user.userId, clientId),
+  ]);
 
   if (!client) {
     notFound();

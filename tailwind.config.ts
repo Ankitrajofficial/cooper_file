@@ -12,8 +12,8 @@ const config: Config = {
         sans: ["var(--font-inter)", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
-        ink: "#0f172a",
-        paper: "#f8fafc",
+        ink: "#191c1e",
+        paper: "#f7f9fb",
         brand: {
           DEFAULT: "#0d9488",
           dark: "#0f766e",
@@ -28,18 +28,21 @@ const config: Config = {
         },
       },
       boxShadow: {
-        panel: "0 20px 50px -25px rgba(15, 23, 42, 0.18)",
-        "panel-lg": "0 32px 64px -28px rgba(15, 23, 42, 0.25)",
+        panel: "0 20px 50px -25px rgba(25, 28, 30, 0.18)",
+        "panel-lg": "0 32px 64px -28px rgba(25, 28, 30, 0.25)",
         glow: "0 0 60px -12px rgba(13, 148, 136, 0.35)",
         "glow-lg": "0 0 80px -8px rgba(13, 148, 136, 0.4)",
-        card: "0 1px 3px rgba(15, 23, 42, 0.04), 0 8px 24px -8px rgba(15, 23, 42, 0.08)",
+        card: "0 1px 2px rgba(25, 28, 30, 0.03), 0 4px 16px -4px rgba(25, 28, 30, 0.06)",
         "card-hover":
-          "0 2px 8px rgba(15, 23, 42, 0.06), 0 16px 40px -12px rgba(13, 148, 136, 0.18)",
+          "0 2px 8px rgba(25, 28, 30, 0.05), 0 12px 32px -8px rgba(13, 148, 136, 0.12)",
+        ambient: "0 1px 2px rgba(25, 28, 30, 0.03), 0 4px 16px -4px rgba(25, 28, 30, 0.06)",
+        "ambient-lg": "0 2px 4px rgba(25, 28, 30, 0.04), 0 8px 24px -8px rgba(25, 28, 30, 0.08)",
       },
       backgroundImage: {
         "grid-fade":
           "linear-gradient(to right, rgba(15, 118, 110, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(15, 118, 110, 0.06) 1px, transparent 1px)",
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-brand": "linear-gradient(135deg, #0d9488 0%, #0891b2 100%)",
       },
       keyframes: {
         "fade-up": {

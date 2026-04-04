@@ -137,13 +137,16 @@ export type BillingPlan = {
 
 export type BillingSummary = {
   tier: SubscriptionTier;
+  planName: string | null;
   status: SubscriptionStatus;
+  hasSubscriptionAccess: boolean;
   interval: BillingInterval;
   autoRenew: boolean;
   currentPeriodStart: string | null;
   currentPeriodEnd: string | null;
   activeClientCount: number;
   clientLimit: number | null;
+  reviewsPerLink: number | null;
   canCreateClient: boolean;
   phone: string;
   pendingTier: SubscriptionTier;

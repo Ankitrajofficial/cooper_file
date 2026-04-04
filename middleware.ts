@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { getRoleHomePath } from "@/lib/auth-redirect";
 
 const AUTH_COOKIE = "review_funnel_session";
 
@@ -34,13 +35,24 @@ async function getSessionPayload(request: NextRequest) {
 
 export async function middleware(request: NextRequest) {
   const session = await getSessionPayload(request);
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const isAuthenticated = Boolean(session?.userId);
   const isAdmin = session?.role === "admin";
-  const homePath = isAdmin ? "/admin" : "/dashboard";
+  const homePath = getRoleHomePath(isAdmin ? "admin" : "client");
+
+  function buildAuthRedirect(path: "/login" | "/admin/login") {
+    const redirectUrl = new URL(path, request.url);
+    const nextPath = `${pathname}${search}`;
+
+    if (nextPath && nextPath !== "/" && nextPath !== path) {
+      redirectUrl.searchParams.set("next", nextPath);
+    }
+
+    return NextResponse.redirect(redirectUrl);
+  }
 
   if (pathname.startsWith("/dashboard") && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return buildAuthRedirect("/login");
   }
 
   if (pathname.startsWith("/dashboard") && isAdmin) {
@@ -48,7 +60,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return buildAuthRedirect("/admin/login");
   }
 
   if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !isAdmin) {

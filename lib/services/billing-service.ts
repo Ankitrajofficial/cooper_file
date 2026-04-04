@@ -5,8 +5,10 @@ import { connectToDatabase } from "@/lib/db";
 import {
   addBillingInterval,
   canCreateClientForTier,
+  getBillingPlan,
   getClientLimitForTier,
   hasActiveSubscription,
+  hasSubscriptionAccess,
   normalizeSubscriptionStatus,
 } from "@/lib/billing";
 import {
@@ -54,6 +56,8 @@ export async function getBillingSummaryForUser(userId: string): Promise<BillingS
   }
 
   const normalizedStatus = normalizeSubscriptionStatus(user);
+  const activePlan = getBillingPlan((user.subscriptionTier || "none") as SubscriptionTier);
+  const hasSubscriptionAccessNow = hasSubscriptionAccess(user);
 
   if (user.subscriptionStatus !== normalizedStatus) {
     await User.findByIdAndUpdate(userId, { subscriptionStatus: normalizedStatus });
@@ -67,12 +71,14 @@ export async function getBillingSummaryForUser(userId: string): Promise<BillingS
   });
   const clientLimit = getClientLimitForTier(user.subscriptionTier || "none");
   const canCreateClient =
-    hasActiveSubscription(user) &&
+    hasSubscriptionAccessNow &&
     canCreateClientForTier(user.subscriptionTier || "none", activeClientCount);
 
   return {
     tier: user.subscriptionTier || "none",
+    planName: activePlan?.name || null,
     status: normalizedStatus,
+    hasSubscriptionAccess: hasSubscriptionAccessNow,
     interval: user.subscriptionInterval || "monthly",
     autoRenew: Boolean(user.subscriptionAutoRenew),
     currentPeriodStart: user.subscriptionCurrentPeriodStart
@@ -83,6 +89,7 @@ export async function getBillingSummaryForUser(userId: string): Promise<BillingS
       : null,
     activeClientCount,
     clientLimit,
+    reviewsPerLink: activePlan?.reviewsPerLink ?? null,
     canCreateClient,
     phone: user.phone || "",
     pendingTier: user.pendingSubscriptionTier || "none",
@@ -104,7 +111,7 @@ export async function requireActiveSubscriptionForUser(userId: string) {
 
   const user = (await User.findById(userId).lean()) as any;
 
-  if (!user || !hasActiveSubscription(user)) {
+  if (!user || !hasSubscriptionAccess(user)) {
     throw new Error(
       "An active subscription is required before you can create or manage review links.",
     );
@@ -242,11 +249,17 @@ export async function markPendingSubscriptionForUser(options: {
 }) {
   await connectToDatabase();
 
+  const user = (await User.findById(options.userId).lean()) as any;
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
   await User.findByIdAndUpdate(options.userId, {
     phone: options.phone,
     pendingSubscriptionTier: options.tier,
     pendingSubscriptionInterval: options.interval,
-    subscriptionStatus: "pending",
+    subscriptionStatus: hasSubscriptionAccess(user) ? user.subscriptionStatus : "pending",
     cashfreeSubscriptionId: options.cashfreeSubscriptionId || "",
     cashfreeCfSubscriptionId: options.cashfreeCfSubscriptionId || "",
     cashfreeSubscriptionStatus: options.cashfreeSubscriptionStatus || "",

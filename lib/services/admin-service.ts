@@ -3,7 +3,7 @@ import Client from "@/models/Client";
 import Review from "@/models/Review";
 import User from "@/models/User";
 import { connectToDatabase } from "@/lib/db";
-import { getBillingPlan } from "@/lib/billing";
+import { getBillingPlan, hasSubscriptionAccess, normalizeSubscriptionStatus } from "@/lib/billing";
 import { resolveUserRole } from "@/lib/auth";
 import { applySuccessfulSubscriptionForUser } from "@/lib/services/billing-service";
 import { buildStarterReviews } from "@/lib/services/review-service";
@@ -147,14 +147,19 @@ export async function getAdminOverview(): Promise<AdminOverview> {
 
   const userSummaries = (users as Array<any>).map((user) => {
     const role = resolveUserRole(user);
+    const normalizedStatus = normalizeSubscriptionStatus(user);
     const metrics = clientMetricsByOwner.get(user._id.toString()) || {
       activeClientCount: 0,
       totalClicks: 0,
       totalReviews: 0,
     };
     const plan = getBillingPlan((user.subscriptionTier || "none") as SubscriptionTier);
+    const hasPaidAccess = role === "client" && plan && hasSubscriptionAccess({
+      subscriptionStatus: normalizedStatus,
+      subscriptionCurrentPeriodEnd: user.subscriptionCurrentPeriodEnd,
+    });
 
-    if (role === "client" && user.subscriptionStatus === "active" && plan) {
+    if (hasPaidAccess) {
       activeSubscribers += 1;
 
       if (user.subscriptionInterval === "yearly") {
@@ -172,7 +177,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       name: user.name || "",
       role,
       subscriptionTier: (user.subscriptionTier || "none") as SubscriptionTier,
-      subscriptionStatus: user.subscriptionStatus || "inactive",
+      subscriptionStatus: normalizedStatus,
       subscriptionInterval: (user.subscriptionInterval || "monthly") as BillingInterval,
       activeClientCount: metrics.activeClientCount,
       totalReviews: metrics.totalReviews,
@@ -188,7 +193,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       ownerEmail: owner?.email || "Unknown",
       ownerName: owner?.name || "",
       ownerPlan: (owner?.subscriptionTier || "none") as SubscriptionTier,
-      ownerSubscriptionStatus: owner?.subscriptionStatus || "inactive",
+      ownerSubscriptionStatus: owner ? normalizeSubscriptionStatus(owner as any) : "inactive",
     } satisfies AdminClientSummary;
   });
 

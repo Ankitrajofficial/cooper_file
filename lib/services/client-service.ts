@@ -10,7 +10,7 @@ import {
   requireActiveSubscriptionForUser,
   resolveClientExpiryForUser,
 } from "@/lib/services/billing-service";
-import { hasActiveSubscription } from "@/lib/billing";
+import { hasSubscriptionAccess } from "@/lib/billing";
 import {
   type BusinessSector,
   type ClientFormInput,
@@ -217,7 +217,7 @@ export async function getPublicClientBySlug(
   const clientRecord = client as any;
   const owner = (await User.findById(clientRecord.userId).lean()) as any;
 
-  if (!owner || !hasActiveSubscription(owner)) {
+  if (!owner || !hasSubscriptionAccess(owner)) {
     return {
       status: "expired",
       client: {

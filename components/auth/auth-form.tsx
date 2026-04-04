@@ -3,10 +3,11 @@
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { resolveSafePostAuthRedirect } from "@/lib/auth-redirect";
 import { toErrorMessage } from "@/lib/utils";
 
 type AuthFormProps = {
@@ -15,12 +16,11 @@ type AuthFormProps = {
 };
 
 export function AuthForm({ mode, audience = "client" }: AuthFormProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isLogin = mode === "login";
   const isAdmin = audience === "admin";
@@ -41,11 +41,14 @@ export function AuthForm({ mode, audience = "client" }: AuthFormProps) {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
-    startTransition(async () => {
+    (async () => {
       try {
         const response = await fetch(`/api/auth/${mode}`, {
           method: "POST",
+          cache: "no-store",
+          credentials: "same-origin",
           headers: {
             "Content-Type": "application/json",
           },
@@ -64,11 +67,22 @@ export function AuthForm({ mode, audience = "client" }: AuthFormProps) {
           throw new Error(payload.error || "Authentication failed.");
         }
 
-        router.replace((payload.redirectTo || "/dashboard") as Route);
+        const role = isAdmin ? "admin" : "client";
+        const targetPath =
+          mode === "login"
+            ? resolveSafePostAuthRedirect(
+                searchParams.get("next"),
+                role,
+                payload.redirectTo,
+              )
+            : resolveSafePostAuthRedirect(payload.redirectTo, role);
+
+        window.location.assign(targetPath as Route);
       } catch (submissionError) {
         setError(toErrorMessage(submissionError));
+        setIsSubmitting(false);
       }
-    });
+    })();
   }
 
   return (
@@ -164,8 +178,8 @@ export function AuthForm({ mode, audience = "client" }: AuthFormProps) {
             </div>
           ) : null}
 
-          <Button type="submit" fullWidth disabled={isPending}>
-            {isPending
+          <Button type="submit" fullWidth disabled={isSubmitting}>
+            {isSubmitting
               ? isLogin
                 ? "Signing in..."
                 : "Creating account..."

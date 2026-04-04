@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { BILLING_PLANS, formatInr } from "@/lib/billing";
 import { BUSINESS_SECTORS, type BillingInterval, type SubscriptionTier } from "@/types";
 import { cn, formatDate, toErrorMessage } from "@/lib/utils";
-import { formatInr } from "@/lib/billing";
 
 type AdminDashboardClientProps = {
   overview: {
@@ -73,10 +73,64 @@ const defaultDraft: ClientDraft = {
   googleReviewLink: "",
 };
 
+const planNameByTier = Object.fromEntries(
+  BILLING_PLANS.map((plan) => [plan.tier, plan.name]),
+) as Record<Exclude<SubscriptionTier, "none">, string>;
+
+/* ─── Stat icon SVGs ─── */
+
+function UsersIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+    </svg>
+  );
+}
+
+function LinksIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.193-5.193a4.5 4.5 0 00-1.242-7.244l4.5-4.5a4.5 4.5 0 016.364 6.364l-1.757 1.757" />
+    </svg>
+  );
+}
+
+function SubsIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function ReviewsIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+    </svg>
+  );
+}
+
+function ClicksIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59" />
+    </svg>
+  );
+}
+
+function RevenueIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+    </svg>
+  );
+}
+
 export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
   const router = useRouter();
   const [feedback, setFeedback] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const [planSelections, setPlanSelections] = useState(() =>
     Object.fromEntries(
       overview.users.map((user) => [
@@ -111,23 +165,24 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
     }));
   }
 
-  function runAction(action: () => Promise<void>) {
+  async function runAction(action: () => Promise<void>) {
     setFeedback("");
+    setIsPending(true);
 
-    startTransition(async () => {
-      try {
-        await action();
-        router.refresh();
-      } catch (error) {
-        setFeedback(toErrorMessage(error));
-      }
-    });
+    try {
+      await action();
+      router.refresh();
+    } catch (error) {
+      setFeedback(toErrorMessage(error));
+    } finally {
+      setIsPending(false);
+    }
   }
 
   function handleGrantPlan(userId: string) {
     const selection = planSelections[userId];
 
-    runAction(async () => {
+    void runAction(async () => {
       const response = await fetch("/api/admin/subscriptions", {
         method: "POST",
         headers: {
@@ -150,7 +205,7 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
   }
 
   function handleClearPlan(userId: string) {
-    runAction(async () => {
+    void runAction(async () => {
       const response = await fetch("/api/admin/subscriptions", {
         method: "POST",
         headers: {
@@ -175,7 +230,7 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
   function handleCreateClient(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    runAction(async () => {
+    void runAction(async () => {
       const response = await fetch("/api/admin/clients", {
         method: "POST",
         headers: {
@@ -199,7 +254,7 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
       return;
     }
 
-    runAction(async () => {
+    void runAction(async () => {
       const response = await fetch(`/api/admin/clients/${clientId}`, {
         method: "DELETE",
       });
@@ -213,120 +268,171 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
     });
   }
 
+  const statCards = [
+    { label: "Client Users", value: overview.stats.totalUsers, icon: <UsersIcon />, color: "text-[#6bd8cb]", glow: "shadow-[0_0_20px_-5px_rgba(107,216,203,0.2)]" },
+    { label: "Managed Links", value: overview.stats.totalClients, icon: <LinksIcon />, color: "text-cyan-400", glow: "shadow-[0_0_20px_-5px_rgba(34,211,238,0.2)]" },
+    { label: "Active Subscribers", value: overview.stats.activeSubscribers, icon: <SubsIcon />, color: "text-emerald-400", glow: "shadow-[0_0_20px_-5px_rgba(52,211,153,0.2)]" },
+    { label: "Total Reviews", value: overview.stats.totalReviews, icon: <ReviewsIcon />, color: "text-violet-400", glow: "shadow-[0_0_20px_-5px_rgba(167,139,250,0.2)]" },
+    { label: "Review Clicks", value: overview.stats.totalClicks, icon: <ClicksIcon />, color: "text-amber-400", glow: "shadow-[0_0_20px_-5px_rgba(251,191,36,0.2)]" },
+    { label: "Estimated MRR", value: formatInr(overview.stats.estimatedMrrInr), icon: <RevenueIcon />, color: "text-rose-400", glow: "shadow-[0_0_20px_-5px_rgba(251,113,133,0.2)]" },
+  ];
+
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-6">
+      {/* ─── Hero section ─── */}
+      <section className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#0c1324] via-[#111b33] to-[#0d2a2a] p-8">
+        <div className="absolute right-0 top-0 h-[300px] w-[300px] rounded-full bg-brand/[0.06] blur-[100px]" />
+        <div className="absolute bottom-0 left-[20%] h-[200px] w-[400px] rounded-full bg-cyan-500/[0.04] blur-[80px]" />
+
+        <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-2xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6bd8cb]">
               Admin Overview
             </p>
-            <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
-              Separate client workspace from platform control.
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Platform Control Center
             </h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              This panel is for admin-only tasks: grant plans, manually add or remove client links,
-              monitor review clicks, and track portfolio revenue.
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-400">
+              Grant plans, manually add or remove client links,
+              monitor review clicks, and track portfolio revenue — all from one panel.
             </p>
           </div>
-          <div className="rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Client users now belong in
-            {" "}
-            <code>/dashboard</code>
-            {" "}
-            and admins belong in
-            {" "}
-            <code>/admin</code>
-            .
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-slate-400 backdrop-blur-sm">
+            Client users use{" "}
+            <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs text-[#6bd8cb]">/dashboard</code>
+            {" "}· Admins use{" "}
+            <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs text-[#6bd8cb]">/admin</code>
           </div>
         </div>
       </section>
 
+      {/* ─── Feedback ─── */}
       {feedback ? (
-        <div className="rounded-xl border border-brand/20 bg-brand/[0.06] px-4 py-3 text-sm text-slate-700">
+        <div className="rounded-xl border border-[#6bd8cb]/20 bg-[#6bd8cb]/[0.06] px-4 py-3 text-sm text-slate-200 backdrop-blur-sm">
           {feedback}
         </div>
       ) : null}
 
+      {/* ─── Stats grid ─── */}
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        {[
-          { label: "Client users", value: overview.stats.totalUsers, color: "text-brand" },
-          { label: "Managed links", value: overview.stats.totalClients, color: "text-cyan-600" },
-          { label: "Active subscribers", value: overview.stats.activeSubscribers, color: "text-emerald-600" },
-          { label: "Total reviews", value: overview.stats.totalReviews, color: "text-violet-600" },
-          { label: "Review clicks", value: overview.stats.totalClicks, color: "text-amber-600" },
-          { label: "Estimated MRR", value: formatInr(overview.stats.estimatedMrrInr), color: "text-rose-600" },
-        ].map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-card">
-            <p className="text-[11px] font-medium text-slate-500">{stat.label}</p>
-            <p className={`mt-1.5 text-2xl font-extrabold tracking-tight ${stat.color}`}>
+        {statCards.map((stat) => (
+          <div
+            key={stat.label}
+            className={cn(
+              "group rounded-2xl border border-white/[0.06] bg-[#151b2d]/80 p-5 backdrop-blur-sm transition-all duration-300 hover:border-white/[0.1] hover:bg-[#191f31]",
+              stat.glow,
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-medium tracking-wide text-slate-500">
+                {stat.label}
+              </p>
+              <div className={cn("opacity-60 transition-opacity group-hover:opacity-100", stat.color)}>
+                {stat.icon}
+              </div>
+            </div>
+            <p className={cn("mt-2.5 text-2xl font-extrabold tracking-tight", stat.color)}>
               {stat.value}
             </p>
           </div>
         ))}
       </section>
 
+      {/* ─── Client Plans + Manual Add ─── */}
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card">
+        {/* Client Plans */}
+        <div className="rounded-2xl border border-white/[0.06] bg-[#151b2d]/80 p-6 backdrop-blur-sm">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand">
-                Client plans
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6bd8cb]">
+                Client Plans
               </p>
-              <h2 className="mt-2 text-xl font-bold text-ink">Grant or remove access</h2>
+              <h2 className="mt-2 text-xl font-bold text-white">Grant or remove access</h2>
             </div>
-            <Badge variant="brand">Active ARR {formatInr(overview.stats.activeArrInr)}</Badge>
+            <div className="rounded-full border border-[#6bd8cb]/20 bg-[#6bd8cb]/[0.08] px-3.5 py-1.5 text-xs font-semibold text-[#6bd8cb]">
+              Active ARR {formatInr(overview.stats.activeArrInr)}
+            </div>
           </div>
 
-          <div className="mt-5 space-y-4">
+          <div className="mt-5 space-y-3">
             {overview.users
               .filter((user) => user.role === "client")
               .map((user) => (
-                <div key={user.id} className="rounded-xl border border-slate-200/80 p-4">
+                <div
+                  key={user.id}
+                  className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-4 transition-all duration-200 hover:border-white/[0.08] hover:bg-white/[0.04]"
+                >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-ink">{user.name || user.email}</p>
-                      <p className="text-xs text-slate-500">{user.email}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Badge variant="slate">Plan: {user.subscriptionTier}</Badge>
-                        <Badge variant="teal">Status: {user.subscriptionStatus}</Badge>
-                        <Badge variant="amber">{user.activeClientCount} links</Badge>
-                        <Badge variant="brand">{user.totalClicks} clicks</Badge>
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#6bd8cb] to-[#29a195] text-xs font-bold text-[#00302b]">
+                          {(user.name || user.email).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-white">{user.name || user.email}</p>
+                          <p className="text-xs text-slate-500">{user.email}</p>
+                        </div>
+                      </div>
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                          {user.subscriptionTier === "none"
+                            ? "No plan"
+                            : planNameByTier[user.subscriptionTier]}
+                        </span>
+                        <span className={cn(
+                          "rounded-md px-2 py-0.5 text-[10px] font-semibold",
+                          user.subscriptionStatus === "active"
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : "bg-slate-500/10 text-slate-400",
+                        )}>
+                          {user.subscriptionStatus}
+                        </span>
+                        <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                          {user.activeClientCount} links
+                        </span>
+                        <span className="rounded-md bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-400">
+                          {user.totalClicks} clicks
+                        </span>
                       </div>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
+                    <div className="flex flex-wrap items-center gap-2">
                       <select
                         value={planSelections[user.id]?.tier || "tier_1"}
                         onChange={(event) =>
                           setPlanSelection(user.id, "tier", event.target.value as Exclude<SubscriptionTier, "none">)
                         }
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                        className="rounded-lg border border-white/[0.08] bg-[#0c1324] px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
                       >
-                        <option value="tier_1">Tier 1</option>
-                        <option value="tier_2">Tier 2</option>
-                        <option value="tier_3">Tier 3</option>
+                        <option value="tier_1">Starter</option>
+                        <option value="tier_2">Growth</option>
+                        <option value="tier_3">Scale</option>
                       </select>
                       <select
                         value={planSelections[user.id]?.interval || "monthly"}
                         onChange={(event) =>
                           setPlanSelection(user.id, "interval", event.target.value as BillingInterval)
                         }
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                        className="rounded-lg border border-white/[0.08] bg-[#0c1324] px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
                       >
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
                       </select>
-                      <Button size="sm" onClick={() => handleGrantPlan(user.id)} disabled={isPending}>
+                      <button
+                        type="button"
+                        onClick={() => handleGrantPlan(user.id)}
+                        disabled={isPending}
+                        className="rounded-lg bg-gradient-to-b from-[#6bd8cb] to-[#29a195] px-3.5 py-1.5 text-xs font-semibold text-[#00302b] shadow-[0_0_12px_-3px_rgba(107,216,203,0.4)] transition-all hover:shadow-[0_0_20px_-3px_rgba(107,216,203,0.5)] disabled:opacity-50"
+                      >
                         Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleClearPlan(user.id)}
                         disabled={isPending}
+                        className="rounded-lg border border-white/[0.08] px-3.5 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:border-rose-500/30 hover:bg-rose-500/[0.06] hover:text-rose-400 disabled:opacity-50"
                       >
                         Remove
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -334,155 +440,198 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
           </div>
         </div>
 
+        {/* Manual Client Add */}
         <form
           onSubmit={handleCreateClient}
-          className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card"
+          className="rounded-2xl border border-white/[0.06] bg-[#151b2d]/80 p-6 backdrop-blur-sm"
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand">
-            Manual client add
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6bd8cb]">
+            Manual Client Add
           </p>
-          <h2 className="mt-2 text-xl font-bold text-ink">Create a client for any account</h2>
+          <h2 className="mt-2 text-xl font-bold text-white">Create a client for any account</h2>
           <p className="mt-2 text-sm text-slate-500">
             Use this when you need to manually add a review link for an existing client owner.
           </p>
 
           <div className="mt-5 space-y-4">
-            <Input
-              label="Client owner email"
-              value={draft.ownerEmail}
-              onChange={(event) => updateDraft("ownerEmail", event.target.value)}
-              placeholder="owner@business.com"
-              required
-            />
-            <Input
-              label="Business name"
-              value={draft.businessName}
-              onChange={(event) => updateDraft("businessName", event.target.value)}
-              required
-            />
-            <Input
-              label="City"
-              value={draft.city}
-              onChange={(event) => updateDraft("city", event.target.value)}
-              required
-            />
             <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-slate-700">Sector</span>
-              <select
-                value={draft.sector}
-                onChange={(event) => updateDraft("sector", event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900"
-              >
-                <option value="">Auto-detect sector</option>
-                {BUSINESS_SECTORS.map((sector) => (
-                  <option key={sector} value={sector}>
-                    {sector}
-                  </option>
-                ))}
-              </select>
+              <span className="text-xs font-medium text-slate-400">Client owner email</span>
+              <input
+                type="email"
+                value={draft.ownerEmail}
+                onChange={(event) => updateDraft("ownerEmail", event.target.value)}
+                placeholder="owner@business.com"
+                required
+                className="w-full rounded-xl border border-white/[0.08] bg-[#0c1324] px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
+              />
             </label>
-            <Input
-              label="Industry"
-              value={draft.industry}
-              onChange={(event) => updateDraft("industry", event.target.value)}
-              placeholder="Girls hostel near coaching institutes"
-            />
-            <Input
-              label="Expiry date"
-              type="date"
-              value={draft.expiresAt}
-              onChange={(event) => updateDraft("expiresAt", event.target.value)}
-            />
-            <Input
-              label="Google review link"
-              value={draft.googleReviewLink}
-              onChange={(event) => updateDraft("googleReviewLink", event.target.value)}
-              placeholder="https://g.page/r/..."
-              required
-            />
-            <Textarea
-              label="Business description"
-              value={draft.businessDescription}
-              onChange={(event) => updateDraft("businessDescription", event.target.value)}
-              placeholder="Optional context for the review generator."
-            />
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-slate-400">Business name</span>
+              <input
+                type="text"
+                value={draft.businessName}
+                onChange={(event) => updateDraft("businessName", event.target.value)}
+                required
+                className="w-full rounded-xl border border-white/[0.08] bg-[#0c1324] px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
+              />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-slate-400">City</span>
+                <input
+                  type="text"
+                  value={draft.city}
+                  onChange={(event) => updateDraft("city", event.target.value)}
+                  required
+                  className="w-full rounded-xl border border-white/[0.08] bg-[#0c1324] px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-slate-400">Sector</span>
+                <select
+                  value={draft.sector}
+                  onChange={(event) => updateDraft("sector", event.target.value)}
+                  className="w-full rounded-xl border border-white/[0.08] bg-[#0c1324] px-4 py-2.5 text-sm text-slate-200 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
+                >
+                  <option value="">Auto-detect</option>
+                  {BUSINESS_SECTORS.map((sector) => (
+                    <option key={sector} value={sector}>
+                      {sector}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-slate-400">Industry</span>
+              <input
+                type="text"
+                value={draft.industry}
+                onChange={(event) => updateDraft("industry", event.target.value)}
+                placeholder="Girls hostel near coaching institutes"
+                className="w-full rounded-xl border border-white/[0.08] bg-[#0c1324] px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
+              />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-slate-400">Expiry date</span>
+              <input
+                type="date"
+                value={draft.expiresAt}
+                onChange={(event) => updateDraft("expiresAt", event.target.value)}
+                className="w-full rounded-xl border border-white/[0.08] bg-[#0c1324] px-4 py-2.5 text-sm text-slate-200 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
+              />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-slate-400">Google review link</span>
+              <input
+                type="url"
+                value={draft.googleReviewLink}
+                onChange={(event) => updateDraft("googleReviewLink", event.target.value)}
+                placeholder="https://g.page/r/..."
+                required
+                className="w-full rounded-xl border border-white/[0.08] bg-[#0c1324] px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
+              />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-slate-400">Business description</span>
+              <textarea
+                value={draft.businessDescription}
+                onChange={(event) => updateDraft("businessDescription", event.target.value)}
+                placeholder="Optional context for the review generator."
+                rows={3}
+                className="w-full resize-none rounded-xl border border-white/[0.08] bg-[#0c1324] px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
+              />
+            </label>
           </div>
 
           <div className="mt-5 flex gap-2">
-            <Button type="submit" disabled={isPending}>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-xl bg-gradient-to-b from-[#6bd8cb] to-[#29a195] px-5 py-2.5 text-sm font-semibold text-[#00302b] shadow-[0_0_16px_-4px_rgba(107,216,203,0.4)] transition-all hover:shadow-[0_0_24px_-4px_rgba(107,216,203,0.5)] disabled:opacity-50"
+            >
               {isPending ? "Working..." : "Create client"}
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant="secondary"
               onClick={() => setDraft(defaultDraft)}
               disabled={isPending}
+              className="rounded-xl border border-white/[0.08] px-5 py-2.5 text-sm font-semibold text-slate-400 transition-all hover:border-white/[0.15] hover:text-slate-200 disabled:opacity-50"
             >
               Reset
-            </Button>
+            </button>
           </div>
         </form>
       </section>
 
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card">
+      {/* ─── Client Links Table ─── */}
+      <section className="rounded-2xl border border-white/[0.06] bg-[#151b2d]/80 p-6 backdrop-blur-sm">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand">
-              Client links
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6bd8cb]">
+              Client Links
             </p>
-            <h2 className="mt-2 text-xl font-bold text-ink">Track performance by client</h2>
+            <h2 className="mt-2 text-xl font-bold text-white">Track performance by client</h2>
           </div>
+          <p className="text-xs text-slate-500">
+            {overview.clients.length} total links
+          </p>
         </div>
 
         <div className="mt-5 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
-                <th className="px-3 py-2 font-medium">Client</th>
-                <th className="px-3 py-2 font-medium">Owner</th>
-                <th className="px-3 py-2 font-medium">Plan</th>
-                <th className="px-3 py-2 font-medium">Reviews</th>
-                <th className="px-3 py-2 font-medium">Clicks</th>
-                <th className="px-3 py-2 font-medium">Created</th>
-                <th className="px-3 py-2 font-medium">Actions</th>
+              <tr className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3">Client</th>
+                <th className="px-4 py-3">Owner</th>
+                <th className="px-4 py-3">Plan</th>
+                <th className="px-4 py-3">Reviews</th>
+                <th className="px-4 py-3">Clicks</th>
+                <th className="px-4 py-3">Created</th>
+                <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
               {overview.clients.map((client) => (
-                <tr key={client.id} className="border-b border-slate-100 last:border-b-0">
-                  <td className="px-3 py-3">
-                    <p className="font-semibold text-ink">{client.businessName}</p>
+                <tr
+                  key={client.id}
+                  className="border-t border-white/[0.04] transition-colors hover:bg-white/[0.02]"
+                >
+                  <td className="px-4 py-3.5">
+                    <p className="font-semibold text-white">{client.businessName}</p>
                     <p className="text-xs text-slate-500">{client.city}</p>
                   </td>
-                  <td className="px-3 py-3">
-                    <p className="text-slate-700">{client.ownerName || client.ownerEmail}</p>
+                  <td className="px-4 py-3.5">
+                    <p className="text-slate-300">{client.ownerName || client.ownerEmail}</p>
                     <p className="text-xs text-slate-500">{client.ownerEmail}</p>
                   </td>
-                  <td className="px-3 py-3">
-                    <div className="space-y-1">
-                      <Badge variant="slate">{client.ownerPlan}</Badge>
-                      <div className="text-xs text-slate-500">{client.ownerSubscriptionStatus}</div>
-                    </div>
+                  <td className="px-4 py-3.5">
+                    <span className={cn(
+                      "rounded-md px-2 py-0.5 text-[10px] font-semibold",
+                      client.ownerPlan === "none"
+                        ? "bg-slate-500/10 text-slate-400"
+                        : "bg-[#6bd8cb]/10 text-[#6bd8cb]",
+                    )}>
+                      {client.ownerPlan}
+                    </span>
+                    <p className="mt-0.5 text-[10px] text-slate-500">{client.ownerSubscriptionStatus}</p>
                   </td>
-                  <td className="px-3 py-3 font-semibold text-cyan-700">{client.reviewCount}</td>
-                  <td className="px-3 py-3 font-semibold text-brand">{client.clickCount}</td>
-                  <td className="px-3 py-3 text-slate-600">{formatDate(client.createdAt)}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex flex-wrap gap-2">
+                  <td className="px-4 py-3.5 font-semibold text-violet-400">{client.reviewCount}</td>
+                  <td className="px-4 py-3.5 font-semibold text-cyan-400">{client.clickCount}</td>
+                  <td className="px-4 py-3.5 text-slate-400">{formatDate(client.createdAt)}</td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex flex-wrap gap-1.5">
                       <Link
                         href={`/review/${client.slug}`}
                         target="_blank"
-                        className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                        className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:text-white"
                       >
                         Open
                       </Link>
                       <button
                         type="button"
                         onClick={() => handleDeleteClient(client.id, client.businessName)}
-                        className={cn(
-                          "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
-                          "bg-rose-50 text-rose-700 hover:bg-rose-100",
-                        )}
+                        className="rounded-lg border border-white/[0.04] px-3 py-1 text-xs font-semibold text-rose-400/70 transition hover:border-rose-500/30 hover:bg-rose-500/[0.06] hover:text-rose-400"
                         disabled={isPending}
                       >
                         Delete

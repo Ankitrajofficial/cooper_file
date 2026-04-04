@@ -1,23 +1,32 @@
 "use client";
 
 import type { Route } from "next";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export function LogoutButton({ redirectTo = "/login" }: { redirectTo?: Route }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
   function handleLogout() {
-    startTransition(async () => {
+    setIsPending(true);
+
+    (async () => {
       try {
-        await fetch("/api/auth/logout", { method: "POST" });
-        router.replace(redirectTo);
+        const response = await fetch("/api/auth/logout", {
+          method: "POST",
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+
+        if (!response.ok) {
+          throw new Error("Sign out failed.");
+        }
+
+        window.location.assign(redirectTo);
       } catch {
-        /* keep button enabled on failure */
+        setIsPending(false);
       }
-    });
+    })();
   }
 
   return (
