@@ -21,7 +21,7 @@ export function DashboardShell({
                 href="/dashboard"
                 className="text-lg font-bold tracking-tight text-ink"
               >
-                Dashboard
+                Client Dashboard
               </Link>
               <p className="text-xs text-slate-500">{email}</p>
             </div>

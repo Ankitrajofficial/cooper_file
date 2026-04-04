@@ -3,6 +3,7 @@ import {
   BILLING_INTERVALS,
   SUBSCRIPTION_STATUSES,
   SUBSCRIPTION_TIERS,
+  USER_ROLES,
 } from "@/types";
 
 const userSchema = new Schema(
@@ -37,6 +38,11 @@ const userSchema = new Schema(
       type: String,
       default: "",
       trim: true,
+    },
+    role: {
+      type: String,
+      enum: USER_ROLES,
+      default: "client",
     },
     subscriptionTier: {
       type: String,

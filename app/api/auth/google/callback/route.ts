@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { setAuthCookie } from "@/lib/auth";
+import {
+  getPostLoginRedirectPath,
+  resolveUserRole,
+  setAuthCookie,
+} from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import {
   clearGoogleOauthCookies,
@@ -43,6 +47,7 @@ export async function GET(request: Request) {
         name: profile.name || "",
         image: profile.picture || "",
         password: null,
+        role: "client",
       });
     } else {
       user.email = profile.email.toLowerCase();
@@ -52,13 +57,16 @@ export async function GET(request: Request) {
       await user.save();
     }
 
+    const role = resolveUserRole(user);
+
     await setAuthCookie({
       userId: user._id.toString(),
       email: user.email,
+      role,
     });
     await clearGoogleOauthCookies();
 
-    return NextResponse.redirect(new URL("/dashboard", appUrl));
+    return NextResponse.redirect(new URL(getPostLoginRedirectPath(role), appUrl));
   } catch (error) {
     await clearGoogleOauthCookies();
 

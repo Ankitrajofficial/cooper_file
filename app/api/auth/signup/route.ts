@@ -36,18 +36,22 @@ export async function POST(request: Request) {
     const user = await User.create({
       email,
       password: hashedPassword,
+      role: "client",
     });
 
     await setAuthCookie({
       userId: user._id.toString(),
       email: user.email,
+      role: "client",
     });
 
     return NextResponse.json({
       user: {
         id: user._id.toString(),
         email: user.email,
+        role: "client",
       },
+      redirectTo: "/dashboard/billing",
     });
   } catch (error) {
     return NextResponse.json(

@@ -3,7 +3,7 @@ import { AuthForm } from "@/components/auth/auth-form";
 import { SiteHeader } from "@/components/site/site-header";
 import { getPostLoginRedirectPath, getSession } from "@/lib/auth";
 
-export default async function SignupPage() {
+export default async function AdminLoginPage() {
   const session = await getSession();
 
   if (session) {
@@ -18,7 +18,7 @@ export default async function SignupPage() {
 
       <SiteHeader compact />
       <main className="relative flex items-center justify-center px-4 pb-16 pt-8">
-        <AuthForm mode="signup" />
+        <AuthForm mode="login" audience="admin" />
       </main>
     </div>
   );

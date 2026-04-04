@@ -1,6 +1,10 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { setAuthCookie } from "@/lib/auth";
+import {
+  getPostLoginRedirectPath,
+  resolveUserRole,
+  setAuthCookie,
+} from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { validateEmail, validatePassword } from "@/lib/validators";
 import User from "@/models/User";
@@ -45,16 +49,21 @@ export async function POST(request: Request) {
       );
     }
 
+    const role = resolveUserRole(user);
+
     await setAuthCookie({
       userId: user._id.toString(),
       email: user.email,
+      role,
     });
 
     return NextResponse.json({
       user: {
         id: user._id.toString(),
         email: user.email,
+        role,
       },
+      redirectTo: getPostLoginRedirectPath(role),
     });
   } catch (error) {
     return NextResponse.json(

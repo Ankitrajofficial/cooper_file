@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireClientUser } from "@/lib/auth";
 import { fetchCashfreeSubscription } from "@/lib/services/cashfree-service";
 import {
   applySuccessfulSubscriptionForUser,
@@ -17,7 +17,7 @@ type BillingConfirmPageProps = {
 export default async function BillingConfirmPage({
   searchParams,
 }: BillingConfirmPageProps) {
-  const user = await requireUser();
+  const user = await requireClientUser();
   const { subscription_id: subscriptionId = "" } = await searchParams;
 
   if (!subscriptionId) {

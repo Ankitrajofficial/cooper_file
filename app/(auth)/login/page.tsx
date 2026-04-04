@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth/auth-form";
 import { SiteHeader } from "@/components/site/site-header";
-import { getSession } from "@/lib/auth";
+import { getPostLoginRedirectPath, getSession } from "@/lib/auth";
 
 export default async function LoginPage() {
   const session = await getSession();
 
   if (session) {
-    redirect("/dashboard");
+    redirect(getPostLoginRedirectPath(session.role));
   }
 
   return (

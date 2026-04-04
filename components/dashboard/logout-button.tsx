@@ -1,10 +1,11 @@
 "use client";
 
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 
-export function LogoutButton() {
+export function LogoutButton({ redirectTo = "/login" }: { redirectTo?: Route }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -12,7 +13,7 @@ export function LogoutButton() {
     startTransition(async () => {
       try {
         await fetch("/api/auth/logout", { method: "POST" });
-        router.replace("/login");
+        router.replace(redirectTo);
       } catch {
         /* keep button enabled on failure */
       }

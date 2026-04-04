@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtVerify, SignJWT } from "jose";
+import { type UserRole } from "@/types";
 
 const AUTH_COOKIE = "review_funnel_session";
 const SESSION_TTL = 60 * 60 * 24 * 7;
@@ -18,6 +19,7 @@ function getJwtSecret() {
 export type SessionUser = {
   userId: string;
   email: string;
+  role: UserRole;
 };
 
 export async function signSession(payload: SessionUser) {
@@ -30,8 +32,13 @@ export async function signSession(payload: SessionUser) {
 
 export async function verifySession(token: string) {
   const { payload } = await jwtVerify(token, getJwtSecret());
+  const email = String(payload.email || "");
 
-  return payload as SessionUser;
+  return {
+    userId: String(payload.userId || ""),
+    email,
+    role: payload.role === "admin" || isAdminEmail(email) ? "admin" : "client",
+  } satisfies SessionUser;
 }
 
 export async function setAuthCookie(session: SessionUser) {
@@ -73,11 +80,60 @@ export async function getSession() {
   }
 }
 
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function isAdminEmail(email: string) {
+  const configuredEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((value) => normalizeEmail(value))
+    .filter(Boolean);
+
+  return configuredEmails.includes(normalizeEmail(email));
+}
+
+export function resolveUserRole(user: { email: string; role?: string | null }): UserRole {
+  if (user.role === "admin" || isAdminEmail(user.email)) {
+    return "admin";
+  }
+
+  return "client";
+}
+
+export function getPostLoginRedirectPath(role: UserRole) {
+  return role === "admin" ? "/admin" : "/dashboard";
+}
+
 export async function requireUser() {
   const session = await getSession();
 
   if (!session?.userId) {
     redirect("/login");
+  }
+
+  return session;
+}
+
+export async function requireClientUser() {
+  const session = await requireUser();
+
+  if (session.role === "admin") {
+    redirect("/admin");
+  }
+
+  return session;
+}
+
+export async function requireAdminUser() {
+  const session = await getSession();
+
+  if (!session?.userId) {
+    redirect("/admin/login");
+  }
+
+  if (session.role !== "admin") {
+    redirect("/dashboard");
   }
 
   return session;
@@ -90,6 +146,19 @@ export async function requireApiUser() {
     throw new Error("Unauthorized");
   }
 
+  if (session.role !== "client") {
+    throw new Error("Unauthorized");
+  }
+
   return session;
 }
 
+export async function requireApiAdminUser() {
+  const session = await getSession();
+
+  if (!session?.userId || session.role !== "admin") {
+    throw new Error("Unauthorized");
+  }
+
+  return session;
+}

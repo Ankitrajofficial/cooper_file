@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ClientCard } from "@/components/dashboard/client-card";
-import { requireUser } from "@/lib/auth";
+import { requireClientUser } from "@/lib/auth";
 import { getClientLimitLabel } from "@/lib/billing";
 import { getBillingSummaryForUser } from "@/lib/services/billing-service";
 import { listClientsForUser } from "@/lib/services/client-service";
@@ -8,7 +8,7 @@ import { listClientsForUser } from "@/lib/services/client-service";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const user = await requireUser();
+  const user = await requireClientUser();
   const billing = await getBillingSummaryForUser(user.userId);
   const clients = await listClientsForUser(user.userId);
   const totalReviews = clients.reduce((sum, client) => sum + client.reviewCount, 0);
@@ -28,11 +28,11 @@ export default async function DashboardPage() {
               Dashboard Overview
             </p>
             <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
-              Manage every review funnel from one place.
+              Manage your review funnel from one place.
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Create clients, refresh AI-generated reviews, and share public
-              links that help customers leave polished Google reviews faster.
+              Choose a plan, create your review links, refresh curated reviews,
+              and share public pages that help customers leave Google reviews faster.
             </p>
           </div>
           {billing.canCreateClient ? (

@@ -39,6 +39,10 @@ export const SUBSCRIPTION_TIERS = [
 
 export type SubscriptionTier = (typeof SUBSCRIPTION_TIERS)[number];
 
+export const USER_ROLES = ["client", "admin"] as const;
+
+export type UserRole = (typeof USER_ROLES)[number];
+
 export const BILLING_INTERVALS = ["monthly", "yearly"] as const;
 
 export type BillingInterval = (typeof BILLING_INTERVALS)[number];

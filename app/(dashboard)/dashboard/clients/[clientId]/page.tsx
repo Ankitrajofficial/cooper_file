@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { ClientForm } from "@/components/clients/client-form";
-import { requireUser } from "@/lib/auth";
+import { requireClientUser } from "@/lib/auth";
 import { getBillingSummaryForUser } from "@/lib/services/billing-service";
 import { getClientForUser } from "@/lib/services/client-service";
 
@@ -11,7 +11,7 @@ type EditClientPageProps = {
 };
 
 export default async function EditClientPage({ params }: EditClientPageProps) {
-  const user = await requireUser();
+  const user = await requireClientUser();
   const { clientId } = await params;
   const billing = await getBillingSummaryForUser(user.userId);
   const client = await getClientForUser(user.userId, clientId);

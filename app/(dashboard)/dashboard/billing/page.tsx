@@ -1,5 +1,5 @@
 import { BillingPageClient } from "@/components/billing/billing-page-client";
-import { requireUser } from "@/lib/auth";
+import { requireClientUser } from "@/lib/auth";
 import { BILLING_PLANS } from "@/lib/billing";
 import { getCashfreeMode, isCashfreeConfigured } from "@/lib/services/cashfree-service";
 import { getBillingSummaryForUser } from "@/lib/services/billing-service";
@@ -7,7 +7,7 @@ import { getBillingSummaryForUser } from "@/lib/services/billing-service";
 export const dynamic = "force-dynamic";
 
 export default async function BillingPage() {
-  const user = await requireUser();
+  const user = await requireClientUser();
   const summary = await getBillingSummaryForUser(user.userId);
 
   return (

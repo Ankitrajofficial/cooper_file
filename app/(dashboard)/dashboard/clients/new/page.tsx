@@ -1,9 +1,9 @@
 import { ClientForm } from "@/components/clients/client-form";
-import { requireUser } from "@/lib/auth";
+import { requireClientUser } from "@/lib/auth";
 import { getBillingSummaryForUser } from "@/lib/services/billing-service";
 
 export default async function NewClientPage() {
-  const user = await requireUser();
+  const user = await requireClientUser();
   const billing = await getBillingSummaryForUser(user.userId);
 
   return (
