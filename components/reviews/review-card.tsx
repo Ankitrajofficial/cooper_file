@@ -20,6 +20,7 @@ export function ReviewCard({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [isOpening, setIsOpening] = useState(false);
+  const [showManualCopy, setShowManualCopy] = useState(false);
 
   useEffect(() => {
     if (!copied) {
@@ -33,19 +34,21 @@ export function ReviewCard({
 
   async function handleCopyAndOpen() {
     setError("");
+    setShowManualCopy(false);
     setIsOpening(true);
-    const reviewWindow = window.open("", "_blank", "noopener,noreferrer");
 
     try {
       const copied = await copyTextToClipboard(text);
 
       if (!copied) {
         setError(
-          "Auto-copy was blocked on this browser. Long-press the review text to copy it manually.",
+          "Auto-copy was blocked on this browser. Copy the review manually, then open Google review.",
         );
-      } else {
-        setCopied(true);
+        setShowManualCopy(true);
+        return;
       }
+
+      setCopied(true);
 
       void fetch(`/api/review/${slug}/click`, {
         method: "POST",
@@ -54,17 +57,12 @@ export function ReviewCard({
         },
         body: JSON.stringify({ reviewId }),
       });
-
-      if (reviewWindow) {
-        reviewWindow.location.href = googleReviewLink;
-      } else {
-        window.open(googleReviewLink, "_blank", "noopener,noreferrer");
-      }
+      window.open(googleReviewLink, "_blank", "noopener,noreferrer");
     } catch {
-      reviewWindow?.close();
       setError(
-        "Could not open the Google review form. Please try again.",
+        "Could not complete the one-click review flow. Copy the text manually and then open Google review.",
       );
+      setShowManualCopy(true);
     } finally {
       setIsOpening(false);
     }
@@ -73,6 +71,34 @@ export function ReviewCard({
   return (
     <div className="card-hover rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
       <p className="select-text text-sm leading-relaxed text-slate-700">{text}</p>
+      {showManualCopy ? (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p className="text-xs font-medium text-amber-900">
+            Manual copy fallback
+          </p>
+          <p className="mt-1 text-xs leading-5 text-amber-800">
+            Press and hold the review text below to copy it, then open the Google review form.
+          </p>
+          <textarea
+            readOnly
+            value={text}
+            className="mt-3 min-h-28 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none"
+            onFocus={(event) => event.currentTarget.select()}
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => window.open(googleReviewLink, "_blank", "noopener,noreferrer")}
+            >
+              Open Google Review
+            </Button>
+            <Button size="sm" onClick={handleCopyAndOpen}>
+              Try auto-copy again
+            </Button>
+          </div>
+        </div>
+      ) : null}
       <div className="mt-4 flex items-center justify-between gap-3">
         <Button size="sm" onClick={handleCopyAndOpen} disabled={isOpening}>
           {copied ? (

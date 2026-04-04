@@ -4,16 +4,16 @@ import { legalConfig } from "@/lib/legal";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Shipping and Delivery | Review Machine",
+  title: `Shipping and Delivery | ${legalConfig.brandName}`,
   description:
-    "Read how delivery and access works for Review Machine digital subscription services.",
+    `Read how delivery and access works for ${legalConfig.brandName} digital subscription services.`,
 };
 
 export default function ShippingAndDeliveryPage() {
   return (
     <LegalPageShell
       title="Shipping and Delivery"
-      description="Review Machine is a digital service. This page explains how subscription access and feature delivery work after payment."
+      description={`${legalConfig.brandName} is a digital service. This page explains how subscription access and feature delivery work after payment.`}
     >
       <LegalSection title="1. Nature of Delivery">
         <p>

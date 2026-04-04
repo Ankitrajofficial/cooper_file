@@ -1,15 +1,13 @@
 export const legalConfig = {
-  brandName: "Review Machine",
-  legalEntity: "[add your legal business name]",
-  websiteUrl:
-    process.env.NEXT_PUBLIC_APP_URL &&
-    !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
-      ? process.env.NEXT_PUBLIC_APP_URL
-      : "[add your production website URL]",
-  supportEmail: "[add your support email]",
-  supportPhone: "[add your support phone number]",
-  businessAddress: "[add your registered business address]",
-  grievanceContact: "[add your grievance or compliance contact]",
+  brandName: "Review Engine",
+  legalEntity: "Ankit Raj",
+  websiteUrl: "Website URL will be updated soon",
+  supportEmail: "Email will be updated soon",
+  supportPhone: "+91-6283464174",
+  businessAddress: "MSME Registered Business, India",
+  grievanceContact: "Ankit Raj · +91-6283464174",
+  msmeStatus: "MSME Registered",
+  udyamNo: "UDYAM-PB-11-0045976",
   jurisdiction: "India",
   effectiveDate: "2026-04-05",
 } as const;

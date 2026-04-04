@@ -4,16 +4,16 @@ import { legalConfig } from "@/lib/legal";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Review Machine",
+  title: `Privacy Policy | ${legalConfig.brandName}`,
   description:
-    "Read how Review Machine collects, uses, stores, and protects personal and business information.",
+    `Read how ${legalConfig.brandName} collects, uses, stores, and protects personal and business information.`,
 };
 
 export default function PrivacyPolicyPage() {
   return (
     <LegalPageShell
       title="Privacy Policy"
-      description="This policy explains what information we collect, why we collect it, and how we use and protect it when you use Review Machine."
+      description={`This policy explains what information we collect, why we collect it, and how we use and protect it when you use ${legalConfig.brandName}.`}
     >
       <LegalSection title="1. Information We Collect">
         <p>We may collect the following categories of information:</p>

@@ -5,16 +5,16 @@ import { legalConfig } from "@/lib/legal";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Contact Us | Review Machine",
+  title: `Contact Us | ${legalConfig.brandName}`,
   description:
-    "Find support, billing, and compliance contact details for Review Machine.",
+    `Find support, billing, and compliance contact details for ${legalConfig.brandName}.`,
 };
 
 export default function ContactUsPage() {
   return (
     <LegalPageShell
       title="Contact Us"
-      description="Use this page for support, billing, cancellation, grievance, and legal communication related to Review Machine."
+      description={`Use this page for support, billing, cancellation, grievance, and legal communication related to ${legalConfig.brandName}.`}
     >
       <LegalSection title="1. Support and Billing Contact">
         <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-5">
@@ -37,6 +37,14 @@ export default function ContactUsPage() {
           <p>
             <span className="font-semibold text-slate-900">Registered address:</span>{" "}
             {legalConfig.businessAddress}
+          </p>
+          <p>
+            <span className="font-semibold text-slate-900">MSME status:</span>{" "}
+            {legalConfig.msmeStatus}
+          </p>
+          <p>
+            <span className="font-semibold text-slate-900">Udyam number:</span>{" "}
+            {legalConfig.udyamNo}
           </p>
         </div>
       </LegalSection>

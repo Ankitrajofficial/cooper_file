@@ -4,16 +4,16 @@ import { legalConfig } from "@/lib/legal";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Refunds and Cancellations | Review Machine",
+  title: `Refunds and Cancellations | ${legalConfig.brandName}`,
   description:
-    "Read the cancellation and refund policy for Review Machine subscriptions and recurring billing.",
+    `Read the cancellation and refund policy for ${legalConfig.brandName} subscriptions and recurring billing.`,
 };
 
 export default function RefundsAndCancellationsPage() {
   return (
     <LegalPageShell
       title="Refunds and Cancellations"
-      description="This policy explains how subscription cancellations, renewals, and refund requests are handled for Review Machine."
+      description={`This policy explains how subscription cancellations, renewals, and refund requests are handled for ${legalConfig.brandName}.`}
     >
       <LegalSection title="1. Subscription Billing">
         <p>

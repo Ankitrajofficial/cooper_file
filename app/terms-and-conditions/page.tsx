@@ -4,16 +4,16 @@ import { legalConfig } from "@/lib/legal";
 import { formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Terms and Conditions | Review Machine",
+  title: `Terms and Conditions | ${legalConfig.brandName}`,
   description:
-    "Read the terms and conditions governing use of Review Machine and its subscription services.",
+    `Read the terms and conditions governing use of ${legalConfig.brandName} and its subscription services.`,
 };
 
 export default function TermsAndConditionsPage() {
   return (
     <LegalPageShell
       title="Terms and Conditions"
-      description="These terms govern your access to Review Machine, including account usage, subscription billing, and acceptable use of the platform."
+      description={`These terms govern your access to ${legalConfig.brandName}, including account usage, subscription billing, and acceptable use of the platform.`}
     >
       <LegalSection title="1. Acceptance of Terms">
         <p>
