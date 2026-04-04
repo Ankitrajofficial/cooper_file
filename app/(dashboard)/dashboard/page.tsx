@@ -49,7 +49,7 @@ export default async function DashboardPage() {
                   d="M12 4.5v15m7.5-7.5h-15"
                 />
               </svg>
-              Add new client
+              Create Link
             </Link>
           ) : (
             <Link
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-ink">Client dashboard</h2>
+            <h2 className="text-xl font-bold text-ink">Link dashboard</h2>
             <p className="mt-1 text-sm text-slate-500">
               Manage clients, generate categorized reviews, and share their
               public review page.
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
             }
             className="inline-flex items-center rounded-xl bg-gradient-to-b from-brand to-brand-dark px-4 py-2 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.1),0_4px_12px_-2px_rgba(13,148,136,0.35)] transition-all hover:-translate-y-0.5"
           >
-            {billing.canCreateClient ? "Add new client" : "Manage billing"}
+            {billing.canCreateClient ? "Create Link" : "Manage billing"}
           </Link>
         </div>
 
@@ -154,10 +154,10 @@ export default async function DashboardPage() {
               </svg>
             </div>
             <h2 className="mt-4 text-lg font-semibold text-ink">
-              No clients yet
+              No links yet
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Create your first client to generate a unique public review page.
+              Create your first link to generate a unique public review page.
             </p>
           </div>
         )}

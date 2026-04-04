@@ -9,9 +9,9 @@ export default async function NewClientPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-3xl font-bold text-ink">Add client</h1>
+        <h1 className="text-3xl font-bold text-ink">Create link</h1>
         <p className="mt-2 text-slate-600">
-          Save a business profile and instantly create a slug-based public review page.
+          Save a business profile and instantly create a shareable public review link.
         </p>
       </div>
       <ClientForm mode="create" maxExpiryDate={billing.currentPeriodEnd} />

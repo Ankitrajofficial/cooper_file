@@ -17,8 +17,8 @@ const navItems = [
   },
   {
     href: "/dashboard/clients/new",
-    label: "Add Client",
-    description: "Create a new review funnel",
+    label: "Create Link",
+    description: "Create a new review link",
     icon: (
       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
