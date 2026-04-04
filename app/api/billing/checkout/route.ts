@@ -59,6 +59,8 @@ export async function POST(request: Request) {
     const message =
       error instanceof Error ? error.message : "Unable to start checkout.";
 
+    console.error("Billing checkout error:", error);
+
     return NextResponse.json(
       { error: message },
       { status: message === "Unauthorized" ? 401 : 400 },

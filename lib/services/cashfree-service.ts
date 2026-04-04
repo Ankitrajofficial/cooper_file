@@ -61,15 +61,26 @@ async function cashfreeRequest<T>(path: string, init?: RequestInit) {
     cache: "no-store",
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | { message?: string; code?: string }
-    | null;
+  const rawText = await response.text();
+  const payload = (() => {
+    try {
+      return JSON.parse(rawText) as { message?: string; code?: string };
+    } catch {
+      return null;
+    }
+  })();
 
   if (!response.ok) {
-    throw new Error(payload?.message || payload?.code || "Cashfree request failed.");
+    const details =
+      payload?.message ||
+      payload?.code ||
+      rawText.slice(0, 240) ||
+      "Cashfree request failed.";
+
+    throw new Error(`Cashfree ${response.status}: ${details}`);
   }
 
-  return payload as T;
+  return (payload as T | null) ?? ({} as T);
 }
 
 export function isCashfreeConfigured() {

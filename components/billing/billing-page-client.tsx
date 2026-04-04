@@ -91,13 +91,24 @@ export function BillingPageClient({
               phone,
             }),
           });
-          const payload = (await response.json()) as {
-            error?: string;
-            subsSessionId?: string;
-          };
+          const rawText = await response.text();
+          const payload = (() => {
+            try {
+              return JSON.parse(rawText) as {
+                error?: string;
+                subsSessionId?: string;
+              };
+            } catch {
+              return {};
+            }
+          })();
 
           if (!response.ok || !payload.subsSessionId) {
-            throw new Error(payload.error || "Unable to start Cashfree checkout.");
+            throw new Error(
+              payload.error ||
+                rawText ||
+                "Unable to start Cashfree checkout.",
+            );
           }
 
           const cashfreeFactory = window.Cashfree;
