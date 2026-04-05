@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "@/app/globals.css";
 
@@ -29,6 +29,11 @@ export const metadata: Metadata = {
       "Turn happy customers into curated Google reviews that strengthen local SEO and Google profile visibility.",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

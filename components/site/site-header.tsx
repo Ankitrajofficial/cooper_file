@@ -34,11 +34,11 @@ export function SiteHeader({
   ];
 
   return (
-    <header className="sticky top-0 z-50 px-4 py-3 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="rounded-2xl border border-white/[0.08] bg-slate-950/70 px-4 py-2.5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.3)] backdrop-blur-xl sm:px-6">
-          <div className="flex items-center justify-between gap-4">
-            <BrandLogo compact={compact} />
+    <header className="sticky top-0 z-50 w-full max-w-full overflow-x-clip px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl">
+        <div className="w-full max-w-full rounded-2xl border border-white/[0.08] bg-slate-950/70 px-3 py-2.5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.3)] backdrop-blur-xl sm:px-6">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 sm:flex-nowrap sm:gap-4">
+            <BrandLogo compact={compact} className="min-w-0 flex-1 sm:flex-none" />
 
             {!compact && !authenticated ? (
               <nav className="hidden items-center gap-1 lg:flex">
@@ -54,7 +54,7 @@ export function SiteHeader({
               </nav>
             ) : null}
 
-            <div className="flex items-center gap-2">
+            <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
               {authenticated ? (
                 <Link href="/dashboard">
                   <Button size="sm">Dashboard</Button>

@@ -47,7 +47,7 @@ const featureCards = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59" />
       </svg>
     ),
-    title: "Copy → Paste → Post in 10 Seconds",
+    title: "Get 5-Star SEO-Boosting Google Reviews in 10 Seconds",
     benefit:
       "No typing, no thinking, no friction. Customers land on a branded review page, pick a pre-written script that matches their experience, copy it in one tap, and land straight on Google's review form.",
     stat: "10-second review flow",
@@ -76,7 +76,7 @@ const featureCards = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
       </svg>
     ),
-    title: "Every Review = A Local SEO Signal",
+    title: "Increase Visibility on Google Maps Automatically",
     benefit:
       "Each AI-crafted script is loaded with business-relevant keywords, location markers, and natural phrasing that Google's algorithm rewards. More quality reviews = higher map pack ranking = more walk-ins and calls.",
     stat: "3x more visibility",
@@ -211,16 +211,16 @@ export default async function HomePage() {
 
               {/* Headline */}
               <h1 className="animate-fade-up-delay-1 max-w-[640px] text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                AI Writes the Reviews.{" "}
-                <span className="gradient-text">Google Rewards the Rankings.</span>
+                Get 5-star SEO-boosting Google reviews in 10 seconds.{" "}
+                <span className="gradient-text">Turn customers into rankings.</span>
               </h1>
 
               {/* Subheadline */}
               <p className="animate-fade-up-delay-2 max-w-lg text-lg leading-relaxed text-slate-400">
-                Stop waiting for customers to write reviews. Our AI generates
-                hundreds of natural, SEO-optimized review scripts your customers
-                can copy and post to Google in one click — turning every happy
-                customer into a local search ranking signal.
+                Increase visibility on Google Maps automatically with AI-written
+                review scripts your customers can copy and post in one click.
+                Every happy customer becomes a stronger local SEO signal for
+                your business.
               </p>
 
               {/* CTAs */}
@@ -242,9 +242,9 @@ export default async function HomePage() {
               {/* Micro trust signals */}
               <div className="animate-fade-up-delay-4 flex flex-wrap gap-5 pt-2">
                 {[
-                  "AI-scripted review generation",
-                  "One-click customer posting",
-                  "SEO-optimized for Google",
+                  "Turn customers into rankings",
+                  "10-second review flow",
+                  "Boost Google Maps visibility",
                 ].map((item) => (
                   <div
                     key={item}

@@ -28,16 +28,22 @@
 }
 
 html {
+  width: 100%;
+  max-width: 100vw;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 body {
+  width: 100%;
+  max-width: 100vw;
   min-height: 100vh;
   color: var(--on-surface);
   font-feature-settings: "ss01" on, "cv11" on, "cv03" on;
   background: var(--surface-base);
+  overflow-x: hidden;
 }
 
 a {
@@ -47,6 +53,34 @@ a {
 
 * {
   box-sizing: border-box;
+}
+
+body :where(main, section, header, footer, article, aside, nav, div) {
+  max-width: 100%;
+}
+
+img,
+picture,
+video,
+canvas,
+svg,
+iframe {
+  max-width: 100%;
+}
+
+img,
+picture,
+video,
+canvas,
+iframe {
+  height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
 }
 
 ::selection {
@@ -291,3 +325,16 @@ a {
 .stat-bg-cyan { background: linear-gradient(135deg, rgba(6, 182, 212, 0.06) 0%, rgba(6, 182, 212, 0.02) 100%); }
 .stat-bg-violet { background: linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(124, 58, 237, 0.02) 100%); }
 .stat-bg-amber { background: linear-gradient(135deg, rgba(217, 119, 6, 0.06) 0%, rgba(217, 119, 6, 0.02) 100%); }
+
+@media (max-width: 430px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .premium-grid {
+    background-size: 28px 28px;
+  }
+}
