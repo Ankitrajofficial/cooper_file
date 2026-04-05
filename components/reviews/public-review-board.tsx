@@ -22,7 +22,12 @@ export function PublicReviewBoard({
     <div className="min-h-screen bg-slate-50 pb-16">
       <div className="hero-gradient relative">
         <div className="absolute inset-0 premium-grid opacity-20" />
-        <SiteHeader compact showLoginButton={false} />
+        <SiteHeader
+          compact
+          showLoginButton={false}
+          primaryActionLabel="Start Review"
+          primaryActionHref="#review-scripts"
+        />
         <div className="relative px-4 pb-12 pt-4 sm:px-6">
           <div className="mx-auto max-w-5xl space-y-6">
             <div className="flex flex-wrap items-center gap-2">
@@ -68,7 +73,7 @@ export function PublicReviewBoard({
         </div>
       </div>
 
-      <div className="px-4 py-8 sm:px-6">
+      <div id="review-scripts" className="scroll-mt-24 px-4 py-8 sm:px-6">
         <div className="mx-auto max-w-5xl space-y-10">
           {groups.map((group) => (
             <section key={group.category} className="space-y-4">

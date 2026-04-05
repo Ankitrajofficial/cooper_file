@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useState } from "react";
 import { BrandLogo } from "@/components/brand/brand-logo";
@@ -9,14 +10,21 @@ type SiteHeaderProps = {
   authenticated?: boolean;
   compact?: boolean;
   showLoginButton?: boolean;
+  showGetStartedButton?: boolean;
+  primaryActionLabel?: string;
+  primaryActionHref?: string;
 };
 
 export function SiteHeader({
   authenticated = false,
   compact = false,
   showLoginButton = true,
+  showGetStartedButton = true,
+  primaryActionLabel = "Get Started",
+  primaryActionHref = "/signup",
 }: SiteHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const primaryActionIsAnchor = primaryActionHref.startsWith("#");
 
   const navLinks = [
     { href: "#features", label: "Features" },
@@ -64,9 +72,17 @@ export function SiteHeader({
                       </Button>
                     </Link>
                   ) : null}
-                  <Link href="/signup">
-                    <Button size="sm">Get Started</Button>
-                  </Link>
+                  {showGetStartedButton ? (
+                    primaryActionIsAnchor ? (
+                      <a href={primaryActionHref}>
+                        <Button size="sm">{primaryActionLabel}</Button>
+                      </a>
+                    ) : (
+                      <Link href={primaryActionHref as Route}>
+                        <Button size="sm">{primaryActionLabel}</Button>
+                      </Link>
+                    )
+                  ) : null}
                 </>
               )}
 

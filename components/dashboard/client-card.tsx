@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import QRCode from "qrcode";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -11,8 +12,13 @@ import { type DashboardClient } from "@/types";
 export function ClientCard({ client }: { client: DashboardClient }) {
   const router = useRouter();
   const [feedback, setFeedback] = useState("");
+  const [downloadQrPending, setDownloadQrPending] = useState(false);
   const [deletePending, startDeleteTransition] = useTransition();
   const [generatePending, startGenerateTransition] = useTransition();
+
+  function getPublicReviewUrl() {
+    return `${window.location.origin}/review/${client.slug}`;
+  }
 
   async function handleDelete() {
     if (!window.confirm(`Delete ${client.businessName} and all reviews?`)) {
@@ -69,12 +75,43 @@ export function ClientCard({ client }: { client: DashboardClient }) {
 
   async function handleCopyLink() {
     try {
-      await navigator.clipboard.writeText(
-        `${window.location.origin}/review/${client.slug}`,
-      );
+      await navigator.clipboard.writeText(getPublicReviewUrl());
       setFeedback("Public review page copied.");
     } catch {
       setFeedback("Could not copy the public page link.");
+    }
+  }
+
+  async function handleDownloadQr() {
+    setFeedback("");
+    setDownloadQrPending(true);
+
+    try {
+      const publicReviewUrl = getPublicReviewUrl();
+      const dataUrl = await QRCode.toDataURL(publicReviewUrl, {
+        errorCorrectionLevel: "M",
+        margin: 2,
+        width: 1200,
+        color: {
+          dark: "#020617",
+          light: "#FFFFFF",
+        },
+      });
+
+      const downloadLink = document.createElement("a");
+      downloadLink.href = dataUrl;
+      downloadLink.download = `${client.slug}-review-qr.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+
+      setFeedback("QR code downloaded.");
+    } catch (error) {
+      setFeedback(
+        toErrorMessage(error) || "Could not generate the QR code.",
+      );
+    } finally {
+      setDownloadQrPending(false);
     }
   }
 
@@ -170,6 +207,27 @@ export function ClientCard({ client }: { client: DashboardClient }) {
             />
           </svg>
           Copy link
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={handleDownloadQr}
+          disabled={downloadQrPending}
+        >
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3.75 3.75h5.5v5.5h-5.5zm11 0h5.5v5.5h-5.5zm-11 11h5.5v5.5h-5.5zm12.5 0v2.75m0 0V20.25m0-2.75h2.75m-2.75 0H14.5m-1.75-7.5h1.75v1.75h-1.75zm1.75 1.75h1.75v1.75H14.5zm1.75-1.75H18v1.75h-1.75zm-3.5 3.5h1.75V18h-1.75zm3.5 0H18V18h-1.75z"
+            />
+          </svg>
+          {downloadQrPending ? "Downloading QR..." : "Download QR"}
         </Button>
         <Button size="sm" onClick={handleGenerateReviews} disabled={generatePending}>
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
