@@ -14,10 +14,10 @@ export const BILLING_PLANS: BillingPlan[] = [
     clientLimit: 1,
     reviewsPerLink: 200,
     description:
-      "1 active review link with 200 curated Google review options built to help one business collect more ranking-focused reviews.",
+      "1 active review link with 200 curated Google reviews each month, or 2,400 on yearly billing, built to help one business collect more ranking-focused reviews.",
     highlights: [
       "1 active review link",
-      "200 curated reviews on each link",
+      "200 reviews per month or 2,400 per year",
       "Built for one business profile",
     ],
   },
@@ -29,10 +29,10 @@ export const BILLING_PLANS: BillingPlan[] = [
     clientLimit: 5,
     reviewsPerLink: 500,
     description:
-      "5 active review links with up to 500 curated Google review options on each link for growing multi-location businesses.",
+      "5 active review links with 500 curated Google reviews each month, or 6,000 on yearly billing, for growing multi-location businesses.",
     highlights: [
       "5 active review links",
-      "500 curated reviews on each link",
+      "500 reviews per month or 6,000 per year",
       "Best for growing multi-location brands",
     ],
   },
@@ -44,10 +44,10 @@ export const BILLING_PLANS: BillingPlan[] = [
     clientLimit: null,
     reviewsPerLink: null,
     description:
-      "Unlimited active review links with unlimited curated Google review options per link for agencies and large portfolios.",
+      "Unlimited active review links with unlimited curated Google reviews for agencies and large portfolios.",
     highlights: [
       "Unlimited active review links",
-      "Unlimited curated reviews on each link",
+      "Unlimited reviews on every billing cycle",
       "Built for agencies and large portfolios",
     ],
   },
@@ -186,12 +186,29 @@ export function getClientLimitLabel(clientLimit: number | null) {
   return clientLimit.toString();
 }
 
-export function getReviewCapacityLabel(reviewsPerLink: number | null) {
+export function getReviewCapacityForInterval(
+  reviewsPerLink: number | null,
+  interval: BillingInterval,
+) {
   if (reviewsPerLink === null) {
-    return "Unlimited curated reviews per link";
+    return null;
   }
 
-  return `${reviewsPerLink} curated reviews per link`;
+  return interval === "yearly" ? reviewsPerLink * 12 : reviewsPerLink;
+}
+
+export function getReviewCapacityLabel(
+  reviewsPerLink: number | null,
+  interval: BillingInterval = "monthly",
+) {
+  if (reviewsPerLink === null) {
+    return "Unlimited curated reviews";
+  }
+
+  const reviewCapacity = getReviewCapacityForInterval(reviewsPerLink, interval);
+  const periodLabel = interval === "yearly" ? "per year" : "per month";
+
+  return `${reviewCapacity?.toLocaleString("en-IN")} curated reviews ${periodLabel}`;
 }
 
 export function toDateInputValue(value?: string | Date | null) {

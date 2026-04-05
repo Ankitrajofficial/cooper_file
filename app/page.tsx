@@ -4,6 +4,7 @@ import { getPostLoginRedirectPath, getSession } from "@/lib/auth";
 import {
   BILLING_PLANS,
   formatInr,
+  getReviewCapacityForInterval,
   getReviewCapacityLabel,
 } from "@/lib/billing";
 import { SiteHeader } from "@/components/site/site-header";
@@ -487,7 +488,10 @@ export default async function HomePage() {
                         : `${plan.clientLimit} active AI review ${plan.clientLimit === 1 ? "link" : "links"}`,
                       plan.reviewsPerLink === null
                         ? "Unlimited AI-scripted reviews"
-                        : `${plan.reviewsPerLink} AI-scripted reviews per link`,
+                        : `${getReviewCapacityForInterval(plan.reviewsPerLink, "monthly")?.toLocaleString("en-IN")} AI-scripted reviews / month · ${getReviewCapacityForInterval(plan.reviewsPerLink, "yearly")?.toLocaleString("en-IN")} / year`,
+                      plan.reviewsPerLink === null
+                        ? "Unlimited review capacity on yearly billing too"
+                        : `Yearly plan includes ${getReviewCapacityLabel(plan.reviewsPerLink, "yearly")}`,
                       "Branded one-click review pages",
                       "SEO-optimized review scripts",
                       plan.tier === "tier_1"

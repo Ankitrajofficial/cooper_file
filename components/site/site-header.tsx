@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 type SiteHeaderProps = {
   authenticated?: boolean;
   compact?: boolean;
+  showLoginButton?: boolean;
 };
 
 export function SiteHeader({
   authenticated = false,
   compact = false,
+  showLoginButton = true,
 }: SiteHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -51,15 +53,17 @@ export function SiteHeader({
                 </Link>
               ) : (
                 <>
-                  <Link href="/login">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-slate-300 hover:bg-white/[0.06] hover:text-white"
-                    >
-                      Login
-                    </Button>
-                  </Link>
+                  {showLoginButton ? (
+                    <Link href="/login">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                      >
+                        Login
+                      </Button>
+                    </Link>
+                  ) : null}
                   <Link href="/signup">
                     <Button size="sm">Get Started</Button>
                   </Link>

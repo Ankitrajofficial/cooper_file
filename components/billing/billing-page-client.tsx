@@ -186,7 +186,7 @@ export function BillingPageClient({
               <p className="mt-2.5 text-sm leading-relaxed text-[var(--on-surface-variant)]">
                 Cashfree powers the subscription flow. Each plan controls how
                 many active review links you can run and how many curated Google
-                reviews each link can hold.
+                reviews are included in the current billing cycle.
               </p>
             </div>
 
@@ -228,7 +228,7 @@ export function BillingPageClient({
                   <strong className="text-[var(--on-surface)]">
                     {summary.tier === "none"
                       ? "Not active"
-                      : getReviewCapacityLabel(summary.reviewsPerLink)}
+                      : getReviewCapacityLabel(summary.reviewsPerLink, summary.interval)}
                   </strong>
                 </p>
                 <p>
@@ -434,7 +434,7 @@ export function BillingPageClient({
                         <svg className="h-4 w-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                         </svg>
-                        {getReviewCapacityLabel(plan.reviewsPerLink)}
+                        {getReviewCapacityLabel(plan.reviewsPerLink, interval)}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-[var(--on-surface-variant)]">
                         <svg className="h-4 w-4 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

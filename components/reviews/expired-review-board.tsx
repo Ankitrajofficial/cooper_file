@@ -20,7 +20,7 @@ export function ExpiredReviewBoard({
     <div className="min-h-screen bg-slate-50 pb-16">
       <div className="hero-gradient relative">
         <div className="absolute inset-0 premium-grid opacity-20" />
-        <SiteHeader compact />
+        <SiteHeader compact showLoginButton={false} />
       </div>
 
       <div className="px-4 py-10 sm:px-6">
