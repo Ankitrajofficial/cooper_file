@@ -177,9 +177,51 @@ const legalLinks = [
   { href: "/contact-us", label: "Contact Us" },
 ] as const;
 
+type HomePageSearchParams = Record<string, string | string[] | undefined>;
+
+type HomePageProps = {
+  searchParams?: Promise<HomePageSearchParams>;
+};
+
+function getFirstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function buildAuthCallbackPath(searchParams: HomePageSearchParams) {
+  const callbackParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (Array.isArray(value)) {
+      value.forEach((item) => callbackParams.append(key, item));
+    } else if (value) {
+      callbackParams.set(key, value);
+    }
+  }
+
+  if (!callbackParams.has("next")) {
+    callbackParams.set("next", "/dashboard");
+  }
+
+  return `/api/auth/supabase/callback?${callbackParams.toString()}`;
+}
+
 /* ─── Page ─── */
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const supabaseCode = getFirstParam(resolvedSearchParams.code);
+  const supabaseError =
+    getFirstParam(resolvedSearchParams.error_description) ||
+    getFirstParam(resolvedSearchParams.error);
+
+  if (supabaseCode) {
+    redirect(buildAuthCallbackPath(resolvedSearchParams));
+  }
+
+  if (supabaseError) {
+    redirect(`/login?error=${encodeURIComponent(supabaseError)}`);
+  }
+
   const session = await getSession();
 
   if (session) {
