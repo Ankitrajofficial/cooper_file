@@ -1,21 +1,56 @@
 import Link from "next/link";
 import { ClientCard } from "@/components/dashboard/client-card";
 import { requireClientUser } from "@/lib/auth";
+import { FREE_MONTHLY_LINK_LIMIT, FREE_REVIEWS_PER_LINK } from "@/lib/free-tier";
 import { getFreeTierUsageForUser } from "@/lib/services/billing-service";
 import { listClientsForUser } from "@/lib/services/client-service";
+import { toErrorMessage } from "@/lib/utils";
+import { type DashboardClient } from "@/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const user = await requireClientUser();
-  const clients = await listClientsForUser(user.userId);
+  let clients: DashboardClient[] = [];
+  let quota = {
+    linksCreatedThisMonth: 0,
+    monthlyLinkLimit: FREE_MONTHLY_LINK_LIMIT,
+    reviewsPerLink: FREE_REVIEWS_PER_LINK,
+    canCreateLink: false,
+    monthStart: "",
+    nextMonthStart: "",
+  };
+  let dashboardError = "";
+
+  try {
+    [clients, quota] = await Promise.all([
+      listClientsForUser(user.userId),
+      getFreeTierUsageForUser(user.userId),
+    ]);
+  } catch (error) {
+    dashboardError = toErrorMessage(error);
+  }
+
   const totalClicks = clients.reduce((sum, client) => sum + client.clickCount, 0);
   const totalViews = clients.reduce((sum, client) => sum + client.viewCount, 0);
   const activeLinks = clients.filter((client) => !client.isExpired).length;
-  const quota = await getFreeTierUsageForUser(user.userId);
+  const isBackendConfigError = dashboardError.includes("MONGODB_URI");
 
   return (
     <div className="space-y-4">
+      {dashboardError ? (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+          <p className="font-bold text-amber-950">
+            Dashboard data could not load.
+          </p>
+          <p className="mt-1">
+            {isBackendConfigError
+              ? "The backend database is not configured. Add MONGODB_URI in Vercel Environment Variables, then redeploy."
+              : "The backend returned an error while loading your review links. Check the deployment logs for the database/API error."}
+          </p>
+        </section>
+      ) : null}
+
       <section>
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
