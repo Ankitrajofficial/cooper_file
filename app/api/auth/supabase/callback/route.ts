@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   getPostLoginRedirectPath,
   resolveUserRole,
+  setAuthCookie,
 } from "@/lib/auth";
 import { resolveSafePostAuthRedirect } from "@/lib/auth-redirect";
 import { resolveAppOrigin } from "@/lib/request-origin";
@@ -37,6 +38,12 @@ export async function GET(request: Request) {
 
     const { user: appUser, created } = await ensureUserForSupabaseUser(user);
     const role = resolveUserRole(appUser);
+
+    await setAuthCookie({
+      userId: appUser._id.toString(),
+      email: appUser.email,
+      role,
+    });
 
     if (created) {
       try {

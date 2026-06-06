@@ -39,6 +39,12 @@ export async function POST(request: Request) {
       const { user } = await ensureUserForSupabaseUser(data.user);
       const role = resolveUserRole(user);
 
+      await setAuthCookie({
+        userId: user._id.toString(),
+        email: user.email,
+        role,
+      });
+
       return NextResponse.json(
         {
           user: {

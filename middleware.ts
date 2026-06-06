@@ -1,8 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { getRoleHomePath } from "@/lib/auth-redirect";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { getSupabaseMiddlewareUser } from "@/lib/supabase/middleware";
 
 const AUTH_COOKIE = "review_funnel_session";
 
@@ -36,44 +34,12 @@ async function getSessionPayload(request: NextRequest) {
 }
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next();
-  let session = await getSessionPayload(request);
-
-  if (isSupabaseConfigured()) {
-    try {
-      const result = await getSupabaseMiddlewareUser(request);
-      response = result.response;
-
-      if (result.user?.email) {
-        const configuredAdminEmails = (process.env.ADMIN_EMAILS || "")
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean);
-
-        session = {
-          userId: result.user.id,
-          role: configuredAdminEmails.includes(result.user.email.toLowerCase())
-            ? "admin"
-            : "client",
-        };
-      }
-    } catch {
-      // Keep the legacy JWT session path available when Supabase is not ready.
-    }
-  }
+  const session = await getSessionPayload(request);
 
   const { pathname, search } = request.nextUrl;
   const isAuthenticated = Boolean(session?.userId);
   const isAdmin = session?.role === "admin";
   const homePath = getRoleHomePath(isAdmin ? "admin" : "client");
-
-  function withSupabaseCookies(targetResponse: NextResponse) {
-    response.cookies.getAll().forEach((cookie) => {
-      targetResponse.cookies.set(cookie);
-    });
-
-    return targetResponse;
-  }
 
   function buildAuthRedirect(path: "/login") {
     const redirectUrl = new URL(path, request.url);
@@ -83,11 +49,11 @@ export async function middleware(request: NextRequest) {
       redirectUrl.searchParams.set("next", nextPath);
     }
 
-    return withSupabaseCookies(NextResponse.redirect(redirectUrl));
+    return NextResponse.redirect(redirectUrl);
   }
 
   if (pathname === "/admin/login") {
-    return withSupabaseCookies(NextResponse.redirect(new URL("/login", request.url)));
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if (pathname.startsWith("/dashboard") && !isAuthenticated) {
@@ -95,7 +61,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith("/dashboard") && isAdmin) {
-    return withSupabaseCookies(NextResponse.redirect(new URL("/admin", request.url)));
+    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   if (pathname.startsWith("/admin") && !isAuthenticated) {
@@ -103,14 +69,14 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith("/admin") && !isAdmin) {
-    return withSupabaseCookies(NextResponse.redirect(new URL("/dashboard", request.url)));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   if ((pathname === "/login" || pathname === "/signup") && isAuthenticated) {
-    return withSupabaseCookies(NextResponse.redirect(new URL(homePath, request.url)));
+    return NextResponse.redirect(new URL(homePath, request.url));
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

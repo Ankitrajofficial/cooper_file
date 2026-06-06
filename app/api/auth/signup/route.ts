@@ -54,6 +54,14 @@ export async function POST(request: Request) {
         }
       }
 
+      if (data.session) {
+        await setAuthCookie({
+          userId: user._id.toString(),
+          email: user.email,
+          role,
+        });
+      }
+
       return NextResponse.json(
         {
           user: {
