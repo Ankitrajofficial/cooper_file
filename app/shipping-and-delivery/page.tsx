@@ -6,14 +6,14 @@ import { formatDate } from "@/lib/utils";
 export const metadata: Metadata = {
   title: `Shipping and Delivery | ${legalConfig.brandName}`,
   description:
-    `Read how delivery and access works for ${legalConfig.brandName} digital subscription services.`,
+    `Read how delivery and access works for ${legalConfig.brandName} digital services.`,
 };
 
 export default function ShippingAndDeliveryPage() {
   return (
     <LegalPageShell
       title="Shipping and Delivery"
-      description={`${legalConfig.brandName} is a digital service. This page explains how subscription access and feature delivery work after payment.`}
+      description={`${legalConfig.brandName} is a digital service. This page explains how account access and feature delivery work.`}
     >
       <LegalSection title="1. Nature of Delivery">
         <p>
@@ -25,20 +25,20 @@ export default function ShippingAndDeliveryPage() {
 
       <LegalSection title="2. Access Timeline">
         <p>
-          In most cases, subscription access or activation begins shortly after successful payment
-          authorization and confirmation from our payment partner.
+          In most cases, account access begins shortly after sign-up, authentication, and account
+          setup are completed.
         </p>
         <p>
-          In some situations, activation may be delayed while payment status, subscription setup, or
-          account verification is being completed.
+          In some situations, activation may be delayed while account verification, system setup, or
+          security checks are being completed.
         </p>
       </LegalSection>
 
       <LegalSection title="3. Delivery Method">
         <p>
           Access is delivered through your registered account on {legalConfig.websiteUrl}. Once
-          active, eligible users can use the dashboard, create review links, and access subscription
-          features associated with their selected plan.
+          active, eligible users can use the dashboard, create review links, download QR codes, and
+          use free-tier features available in the product.
         </p>
       </LegalSection>
 
@@ -52,8 +52,8 @@ export default function ShippingAndDeliveryPage() {
 
       <LegalSection title="5. Failed or Delayed Delivery">
         <p>
-          If payment has been completed but access is not activated within a reasonable time, please
-          contact us with your payment reference and registered email so we can investigate.
+          If account access is not activated within a reasonable time after sign-up, please contact
+          us with your registered email so we can investigate.
         </p>
       </LegalSection>
 

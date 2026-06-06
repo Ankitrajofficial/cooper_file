@@ -6,6 +6,9 @@ import {
   setAuthCookie,
 } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
+import { ensureUserForSupabaseUser } from "@/lib/services/user-service";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateEmail, validatePassword } from "@/lib/validators";
 import User from "@/models/User";
 
@@ -18,6 +21,40 @@ export async function POST(request: Request) {
 
     const email = validateEmail(body.email || "");
     const password = validatePassword(body.password || "");
+
+    if (isSupabaseConfigured()) {
+      const supabase = await createSupabaseServerClient();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error || !data.user) {
+        return NextResponse.json(
+          { error: error?.message || "Invalid email or password." },
+          { status: 401 },
+        );
+      }
+
+      const { user } = await ensureUserForSupabaseUser(data.user);
+      const role = resolveUserRole(user);
+
+      return NextResponse.json(
+        {
+          user: {
+            id: user._id.toString(),
+            email: user.email,
+            role,
+          },
+          redirectTo: getPostLoginRedirectPath(role),
+        },
+        {
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        },
+      );
+    }
 
     await connectToDatabase();
 

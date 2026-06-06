@@ -2,10 +2,6 @@ import { notFound } from "next/navigation";
 import { ExpiredReviewBoard } from "@/components/reviews/expired-review-board";
 import { PublicReviewBoard } from "@/components/reviews/public-review-board";
 import { getPublicClientBySlug } from "@/lib/services/client-service";
-import {
-  groupReviewsByCategory,
-  selectRotatingReviews,
-} from "@/lib/services/review-service";
 
 export const dynamic = "force-dynamic";
 
@@ -37,20 +33,5 @@ export default async function PublicReviewPage({
     );
   }
 
-  const rotatingReviews = selectRotatingReviews(
-    payload.reviews.map((review) => ({
-      id: review.id,
-      category: review.category,
-      text: review.text,
-    })),
-    payload.client.sector,
-    2,
-  );
-
-  const groups = groupReviewsByCategory(
-    rotatingReviews,
-    payload.client.sector,
-  ).filter((group) => group.reviews.length > 0);
-
-  return <PublicReviewBoard client={payload.client} groups={groups} />;
+  return <PublicReviewBoard client={payload.client} />;
 }

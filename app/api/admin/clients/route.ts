@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireApiAdminUser } from "@/lib/auth";
+import { sendLinkCreatedEmail } from "@/lib/services/email-service";
 import { createClientForUserAsAdmin } from "@/lib/services/admin-service";
 import { validateClientInput } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
     await requireApiAdminUser();
+    const origin = new URL(request.url).origin;
     const body = (await request.json()) as Record<string, unknown> & {
       ownerEmail?: string;
     };
@@ -19,12 +21,24 @@ export async function POST(request: Request) {
       ownerEmail: body.ownerEmail,
       input,
     });
+    const publicReviewUrl = `${origin}/review/${client.slug}`;
+
+    try {
+      await sendLinkCreatedEmail({
+        email: body.ownerEmail,
+        businessName: client.businessName,
+        publicReviewUrl,
+      });
+    } catch {
+      // Email should not block admin link creation.
+    }
 
     return NextResponse.json(
       {
         client: {
           id: client._id.toString(),
           slug: client.slug,
+          publicReviewUrl,
         },
       },
       { status: 201 },

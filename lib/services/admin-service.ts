@@ -3,15 +3,20 @@ import Client from "@/models/Client";
 import Review from "@/models/Review";
 import User from "@/models/User";
 import { connectToDatabase } from "@/lib/db";
+import { FREE_REVIEWS_PER_LINK } from "@/lib/free-tier";
 import { getBillingPlan, hasSubscriptionAccess, normalizeSubscriptionStatus } from "@/lib/billing";
 import { resolveUserRole } from "@/lib/auth";
-import { applySuccessfulSubscriptionForUser } from "@/lib/services/billing-service";
-import { buildStarterReviews } from "@/lib/services/review-service";
+import {
+  activateFreeSubscriptionForUser,
+  applySuccessfulSubscriptionForUser,
+} from "@/lib/services/billing-service";
+import { buildScriptedReviews } from "@/lib/services/review-service";
 import { detectIndustry, detectSector, slugify } from "@/lib/utils";
 import {
   type BillingInterval,
   type BusinessSector,
   type ClientFormInput,
+  type PaidSubscriptionTier,
   type SubscriptionTier,
 } from "@/types";
 
@@ -43,11 +48,18 @@ type AdminClientSummary = {
   slug: string;
   businessName: string;
   city: string;
+  sector: BusinessSector;
+  industry: string;
+  businessDescription: string;
+  expiresAt: string | null;
+  expiryMode: "subscription" | "custom";
   ownerId: string;
   ownerEmail: string;
   ownerName: string;
   ownerPlan: SubscriptionTier;
+  ownerPlanName: string;
   ownerSubscriptionStatus: string;
+  ownerSubscriptionInterval: BillingInterval;
   reviewCount: number;
   clickCount: number;
   createdAt: string;
@@ -126,11 +138,18 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       slug: client.slug,
       businessName: client.businessName,
       city: client.city,
+      sector: (client.sector as BusinessSector | undefined) || detectSector(client.businessName),
+      industry: client.industry || "General Business",
+      businessDescription: client.businessDescription || "",
+      expiresAt: client.expiresAt ? new Date(client.expiresAt).toISOString() : null,
+      expiryMode: client.expiryMode || "subscription",
       ownerId,
       ownerEmail: "",
       ownerName: "",
       ownerPlan: "none" as SubscriptionTier,
+      ownerPlanName: "No plan",
       ownerSubscriptionStatus: "inactive",
+      ownerSubscriptionInterval: "monthly" as BillingInterval,
       reviewCount,
       clickCount: client.clickCount || 0,
       createdAt: new Date(client.createdAt).toISOString(),
@@ -187,13 +206,17 @@ export async function getAdminOverview(): Promise<AdminOverview> {
 
   const populatedClients = clientSummaries.map((client) => {
     const owner = usersById.get(client.ownerId);
+    const ownerPlan = (owner?.subscriptionTier || "none") as SubscriptionTier;
+    const plan = getBillingPlan(ownerPlan);
 
     return {
       ...client,
       ownerEmail: owner?.email || "Unknown",
       ownerName: owner?.name || "",
-      ownerPlan: (owner?.subscriptionTier || "none") as SubscriptionTier,
+      ownerPlan,
+      ownerPlanName: plan?.name || "No plan",
       ownerSubscriptionStatus: owner ? normalizeSubscriptionStatus(owner as any) : "inactive",
+      ownerSubscriptionInterval: (owner?.subscriptionInterval || "monthly") as BillingInterval,
     } satisfies AdminClientSummary;
   });
 
@@ -235,9 +258,14 @@ export async function setSubscriptionForUserAsAdmin(options: {
     return;
   }
 
+  if (options.tier === "free") {
+    await activateFreeSubscriptionForUser(options.userId);
+    return;
+  }
+
   await applySuccessfulSubscriptionForUser({
     userId: options.userId,
-    tier: options.tier,
+    tier: options.tier as PaidSubscriptionTier,
     interval: options.interval,
     cashfreeSubscriptionStatus: "ADMIN_ACTIVE",
   });
@@ -249,21 +277,65 @@ export async function createClientForUserAsAdmin(options: {
 }) {
   await connectToDatabase();
 
-  const owner = (await User.findOne({
-    email: options.ownerEmail.trim().toLowerCase(),
-  })) as any;
+  const ownerEmail = options.ownerEmail.trim().toLowerCase();
+  const requestedExpiry = options.input.expiresAt
+    ? toEndOfDay(options.input.expiresAt)
+    : null;
+  const fallbackPeriodEnd = new Date();
+
+  fallbackPeriodEnd.setFullYear(fallbackPeriodEnd.getFullYear() + 1);
+
+  let owner = (await User.findOne({ email: ownerEmail })) as any;
 
   if (!owner) {
-    throw new Error("Client owner not found for that email.");
+    const now = new Date();
+
+    await User.collection.insertOne({
+      email: ownerEmail,
+      password: null,
+      name: ownerEmail.split("@")[0] || "Client",
+      role: "client",
+      image: "",
+      phone: "",
+      subscriptionTier: "free",
+      subscriptionInterval: "monthly",
+      subscriptionStatus: "active",
+      subscriptionAutoRenew: false,
+      subscriptionCurrentPeriodStart: now,
+      subscriptionCurrentPeriodEnd: requestedExpiry || fallbackPeriodEnd,
+      pendingSubscriptionTier: "none",
+      pendingSubscriptionInterval: "monthly",
+      lastPaymentAt: now,
+      cashfreeCustomerId: "",
+      cashfreeSubscriptionId: "",
+      cashfreeCfSubscriptionId: "",
+      cashfreeSubscriptionStatus: "FREE_ACTIVE",
+      createdAt: now,
+    });
+
+    owner = (await User.findOne({ email: ownerEmail })) as any;
+  }
+
+  if (!owner) {
+    throw new Error("Client owner could not be created.");
+  }
+
+  if (!owner.subscriptionCurrentPeriodEnd || !hasSubscriptionAccess(owner)) {
+    owner.subscriptionTier = owner.subscriptionTier === "none" ? "free" : owner.subscriptionTier;
+    owner.subscriptionInterval = owner.subscriptionInterval || "monthly";
+    owner.subscriptionStatus = "active";
+    owner.subscriptionAutoRenew = false;
+    owner.subscriptionCurrentPeriodStart = new Date();
+    owner.subscriptionCurrentPeriodEnd = requestedExpiry || fallbackPeriodEnd;
+    owner.cashfreeSubscriptionStatus = "FREE_ACTIVE";
+    await owner.save();
   }
 
   const sector = (options.input.sector?.trim() as BusinessSector) || detectSector(options.input.businessName);
   const industry =
     options.input.industry?.trim() || detectIndustry(options.input.businessName, sector);
   const slug = await generateUniqueSlug(`${options.input.businessName}-${options.input.city}`);
-  const expiresAt = options.input.expiresAt
-    ? toEndOfDay(options.input.expiresAt)
-    : owner.subscriptionCurrentPeriodEnd || null;
+  const expiresAt = requestedExpiry || owner.subscriptionCurrentPeriodEnd || fallbackPeriodEnd;
   const expiryMode = options.input.expiresAt ? "custom" : "subscription";
 
   const client = await Client.create({
@@ -279,19 +351,19 @@ export async function createClientForUserAsAdmin(options: {
     googleReviewLink: options.input.googleReviewLink,
   });
 
-  const starterReviews = buildStarterReviews({
+  const scriptedReviews = buildScriptedReviews({
     businessName: options.input.businessName,
     city: options.input.city,
     sector,
     industry,
     businessDescription: options.input.businessDescription?.trim() || "",
-  }).map((review) => ({
+  }, FREE_REVIEWS_PER_LINK).map((review) => ({
     clientId: client._id,
     category: review.category,
     text: review.text,
   }));
 
-  await Review.insertMany(starterReviews);
+  await Review.insertMany(scriptedReviews);
 
   return client;
 }
@@ -308,4 +380,32 @@ export async function deleteClientAsAdmin(clientId: string) {
   await Review.deleteMany({ clientId: (client as any)._id });
 
   return client;
+}
+
+export async function deleteClientUserAsAdmin(userId: string) {
+  await connectToDatabase();
+
+  const user = (await User.findById(userId).lean()) as any;
+
+  if (!user) {
+    return null;
+  }
+
+  if (resolveUserRole(user) === "admin") {
+    throw new Error("Admin users cannot be deleted from this panel.");
+  }
+
+  const clients = await Client.find({ userId }).select("_id").lean();
+  const clientIds = clients.map((client) => client._id);
+
+  if (clientIds.length) {
+    await Review.deleteMany({ clientId: { $in: clientIds } });
+    await Client.deleteMany({ _id: { $in: clientIds } });
+  }
+
+  await User.findByIdAndDelete(userId);
+
+  return {
+    deletedClients: clientIds.length,
+  };
 }

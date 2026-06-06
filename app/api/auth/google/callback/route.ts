@@ -4,6 +4,7 @@ import {
   resolveUserRole,
   setAuthCookie,
 } from "@/lib/auth";
+import { addBillingInterval } from "@/lib/billing";
 import { connectToDatabase } from "@/lib/db";
 import {
   clearGoogleOauthCookies,
@@ -41,6 +42,8 @@ export async function GET(request: Request) {
     });
 
     if (!user) {
+      const now = new Date();
+
       user = await User.create({
         email: profile.email.toLowerCase(),
         googleId: profile.sub,
@@ -48,6 +51,13 @@ export async function GET(request: Request) {
         image: profile.picture || "",
         password: null,
         role: "client",
+        subscriptionTier: "free",
+        subscriptionInterval: "monthly",
+        subscriptionStatus: "active",
+        subscriptionAutoRenew: false,
+        subscriptionCurrentPeriodStart: now,
+        subscriptionCurrentPeriodEnd: addBillingInterval(now, "monthly"),
+        cashfreeSubscriptionStatus: "FREE_ACTIVE",
       });
     } else {
       user.email = profile.email.toLowerCase();

@@ -9,7 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Review Machine — AI Review Funnels for Local Businesses",
+  metadataBase: new URL("https://cooperfile.com"),
+  title: "Cooperfile — AI Review Funnels for Local Businesses",
   description:
     "Help local businesses collect more Google reviews with one-click curated review pages designed to improve trust, local SEO, and Google profile visibility.",
   keywords: [
@@ -21,10 +22,10 @@ export const metadata: Metadata = {
     "Google Business Profile",
   ],
   icons: {
-    icon: "/review-machine-logo.png",
+    icon: "/cooperfile-logo.svg",
   },
   openGraph: {
-    title: "Review Machine — AI Review Funnels for Local Businesses",
+    title: "Cooperfile — AI Review Funnels for Local Businesses",
     description:
       "Turn happy customers into curated Google reviews that strengthen local SEO and Google profile visibility.",
     type: "website",

@@ -19,7 +19,7 @@ export default function PrivacyPolicyPage() {
         <p>We may collect the following categories of information:</p>
         <ul className="list-disc space-y-2 pl-5">
           <li>account information such as name, email address, and login details;</li>
-          <li>billing and payment contact information required for subscription setup;</li>
+          <li>support or account-contact information you choose to share with us;</li>
           <li>business profile data, client records, review links, and related workspace content;</li>
           <li>usage, analytics, device, and session information needed to operate and secure the service.</li>
         </ul>
@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
         <p>We use personal and business information to:</p>
         <ul className="list-disc space-y-2 pl-5">
           <li>create and maintain your account;</li>
-          <li>deliver subscriptions, billing, and support;</li>
+          <li>deliver account access, free-tier limits, and support;</li>
           <li>operate review funnels and related AI-assisted features;</li>
           <li>monitor service performance, prevent misuse, and improve the platform;</li>
           <li>comply with legal, tax, accounting, and security obligations.</li>
@@ -50,8 +50,9 @@ export default function PrivacyPolicyPage() {
 
       <LegalSection title="4. Payments">
         <p>
-          Subscription payments are processed by third-party payment partners. We do not store full
-          card details on our own systems unless expressly stated otherwise by an integrated payment
+          Paid subscription billing is currently disabled. If paid plans are introduced later,
+          payments may be processed by third-party payment partners, and we will not store full card
+          details on our own systems unless expressly stated otherwise by an integrated payment
           provider.
         </p>
       </LegalSection>
@@ -67,7 +68,7 @@ export default function PrivacyPolicyPage() {
         <p>
           We retain information for as long as reasonably necessary to provide the service, comply
           with legal obligations, resolve disputes, and enforce agreements. Retention periods may
-          vary depending on the type of data and your subscription status.
+          vary depending on the type of data and your account status.
         </p>
       </LegalSection>
 
@@ -82,7 +83,7 @@ export default function PrivacyPolicyPage() {
       <LegalSection title="8. Your Choices and Rights">
         <p>
           Subject to applicable law, you may request access to, correction of, or deletion of your
-          personal information. You may also contact us to update billing details or request account
+          personal information. You may also contact us to update account details or request account
           closure.
         </p>
       </LegalSection>

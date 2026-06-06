@@ -64,6 +64,9 @@ export function LegalPageShell({
               <p className="mt-2 text-sm text-slate-500">
                 Last updated: {formatDate(legalConfig.effectiveDate)}
               </p>
+              <p className="mt-2 text-sm font-medium text-slate-700">
+                {legalConfig.productAttribution}
+              </p>
             </div>
 
             <div className="space-y-8">{children}</div>

@@ -1,16 +1,15 @@
 import mongoose from "mongoose";
 import Client from "@/models/Client";
+import ClientEvent from "@/models/ClientEvent";
 import Review from "@/models/Review";
-import User from "@/models/User";
 import { connectToDatabase } from "@/lib/db";
+import { FREE_REVIEWS_PER_LINK } from "@/lib/free-tier";
 import { detectIndustry, detectSector, slugify } from "@/lib/utils";
-import { buildStarterReviews } from "@/lib/services/review-service";
+import { buildScriptedReviews } from "@/lib/services/review-service";
 import {
   assertCanCreateClientForUser,
-  requireActiveSubscriptionForUser,
   resolveClientExpiryForUser,
 } from "@/lib/services/billing-service";
-import { hasSubscriptionAccess } from "@/lib/billing";
 import {
   type BusinessSector,
   type ClientFormInput,
@@ -44,6 +43,7 @@ function toDashboardClient(
     expiryMode?: "subscription" | "custom";
     googleReviewLink: string;
     clickCount: number;
+    viewCount?: number;
     createdAt: Date | string;
   },
   reviewCount: number,
@@ -60,7 +60,8 @@ function toDashboardClient(
     expiryMode: client.expiryMode || "subscription",
     isExpired: client.expiresAt ? new Date(client.expiresAt).getTime() <= Date.now() : false,
     googleReviewLink: client.googleReviewLink,
-    clickCount: client.clickCount,
+    clickCount: client.clickCount || 0,
+    viewCount: client.viewCount || 0,
     reviewCount,
     createdAt: new Date(client.createdAt).toISOString(),
   };
@@ -138,19 +139,19 @@ export async function createClientForUser(userId: string, input: ClientFormInput
     googleReviewLink: input.googleReviewLink,
   });
 
-  const starterReviews = buildStarterReviews({
-      businessName: input.businessName,
-      city: input.city,
-      sector,
-      industry,
-      businessDescription: input.businessDescription?.trim() || "",
-    }).map((review) => ({
-      clientId: client._id,
-      category: review.category,
-      text: review.text,
+  const scriptedReviews = buildScriptedReviews({
+    businessName: input.businessName,
+    city: input.city,
+    sector,
+    industry,
+    businessDescription: input.businessDescription?.trim() || "",
+  }, FREE_REVIEWS_PER_LINK).map((review) => ({
+    clientId: client._id,
+    category: review.category,
+    text: review.text,
   }));
 
-  await Review.insertMany(starterReviews);
+  await Review.insertMany(scriptedReviews);
 
   return client;
 }
@@ -161,7 +162,6 @@ export async function updateClientForUser(
   input: ClientFormInput,
 ) {
   await connectToDatabase();
-  await requireActiveSubscriptionForUser(userId);
 
   const sector = (input.sector?.trim() as BusinessSector) || detectSector(input.businessName);
   const industry =
@@ -215,25 +215,6 @@ export async function getPublicClientBySlug(
   }
 
   const clientRecord = client as any;
-  const owner = (await User.findById(clientRecord.userId).lean()) as any;
-
-  if (!owner || !hasSubscriptionAccess(owner)) {
-    return {
-      status: "expired",
-      client: {
-        businessName: clientRecord.businessName,
-        city: clientRecord.city,
-        sector:
-          (clientRecord.sector as BusinessSector | undefined) ||
-          detectSector(clientRecord.businessName),
-        slug: clientRecord.slug,
-      },
-      reason: "subscription_inactive",
-      expiredAt: owner?.subscriptionCurrentPeriodEnd
-        ? new Date(owner.subscriptionCurrentPeriodEnd).toISOString()
-        : null,
-    };
-  }
 
   if (clientRecord.expiresAt && new Date(clientRecord.expiresAt).getTime() <= Date.now()) {
     return {
@@ -251,10 +232,6 @@ export async function getPublicClientBySlug(
     };
   }
 
-  const reviews = await Review.find({ clientId: clientRecord._id })
-    .sort({ category: 1, createdAt: 1 })
-    .lean();
-
   return {
     status: "active",
     client: {
@@ -270,18 +247,77 @@ export async function getPublicClientBySlug(
         : null,
       googleReviewLink: clientRecord.googleReviewLink,
       slug: clientRecord.slug,
-      clickCount: clientRecord.clickCount,
+      clickCount: clientRecord.clickCount || 0,
+      viewCount: clientRecord.viewCount || 0,
     },
-    reviews: (reviews as Array<any>).map((review) => ({
-      id: review._id.toString(),
-      category: review.category,
-      text: review.text,
-    })),
+    reviews: [],
   };
 }
 
-export async function incrementClientClickBySlug(slug: string) {
+function getTrackingMetadata(request?: Request, source = "") {
+  return {
+    source,
+    referrer:
+      request?.headers.get("referer") ||
+      request?.headers.get("referrer") ||
+      "",
+    userAgent: request?.headers.get("user-agent") || "",
+  };
+}
+
+async function recordClientTrackingEventBySlug(
+  slug: string,
+  type: "link_view" | "google_click",
+  request?: Request,
+  source = "",
+) {
   await connectToDatabase();
 
-  await Client.findOneAndUpdate({ slug }, { $inc: { clickCount: 1 } });
+  const now = new Date();
+  const update =
+    type === "link_view"
+      ? {
+          $inc: { viewCount: 1 },
+          $set: { lastViewedAt: now },
+        }
+      : {
+          $inc: { clickCount: 1 },
+          $set: { lastClickedAt: now },
+        };
+
+  const client = await Client.findOneAndUpdate({ slug }, update, {
+    new: false,
+  })
+    .select("_id userId slug")
+    .lean();
+
+  if (!client) {
+    return null;
+  }
+
+  const metadata = getTrackingMetadata(request, source);
+
+  await ClientEvent.create({
+    clientId: (client as any)._id,
+    userId: (client as any).userId,
+    slug: (client as any).slug,
+    type,
+    ...metadata,
+  });
+
+  return client;
+}
+
+export async function incrementClientViewBySlug(
+  slug: string,
+  request?: Request,
+) {
+  return recordClientTrackingEventBySlug(slug, "link_view", request, "public_page");
+}
+
+export async function incrementClientClickBySlug(
+  slug: string,
+  request?: Request,
+) {
+  return recordClientTrackingEventBySlug(slug, "google_click", request, "google_review");
 }

@@ -35,7 +35,7 @@ export function ExpiredReviewBoard({
           <p className="mt-3 text-base leading-relaxed text-slate-600">
             {reason === "link_expired"
               ? "This review page has expired and is no longer accepting new visits."
-              : "This review page is paused because the business subscription is not active right now."}
+              : "This review page is paused and is not accepting new visits right now."}
           </p>
           {expiredAt ? (
             <p className="mt-2 text-sm text-slate-500">
@@ -44,8 +44,8 @@ export function ExpiredReviewBoard({
             </p>
           ) : null}
           <div className="mt-6 rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-600">
-            If you reached this page from the business owner, ask them to renew
-            or reactivate the review funnel and share the updated link.
+            If you reached this page from the business owner, ask them to
+            reactivate the review funnel and share the updated link.
           </div>
           <Link
             href="/"

@@ -1,11 +1,27 @@
 import {
   type BillingInterval,
   type BillingPlan,
+  type PaidSubscriptionTier,
   type SubscriptionStatus,
   type SubscriptionTier,
 } from "@/types";
 
 export const BILLING_PLANS: BillingPlan[] = [
+  {
+    tier: "free",
+    name: "Free",
+    monthlyPriceInr: 0,
+    yearlyPriceInr: 0,
+    clientLimit: 1,
+    reviewsPerLink: 10,
+    description:
+      "1 active review link with 10 starter review scripts each month for testing the review flow.",
+    highlights: [
+      "1 active review link",
+      "10 starter review scripts per month",
+      "Built for testing before upgrading",
+    ],
+  },
   {
     tier: "tier_1",
     name: "Starter",
@@ -14,10 +30,10 @@ export const BILLING_PLANS: BillingPlan[] = [
     clientLimit: 1,
     reviewsPerLink: 200,
     description:
-      "1 active review link with 200 curated Google reviews each month, or 2,400 on yearly billing, built to help one business collect more ranking-focused reviews.",
+      "1 active review link with 200 curated Google review scripts each month, or 2,400 on yearly billing, built to help one business collect more ranking-focused reviews.",
     highlights: [
       "1 active review link",
-      "200 reviews per month or 2,400 per year",
+      "200 scripts per month or 2,400 per year",
       "Built for one business profile",
     ],
   },
@@ -29,10 +45,10 @@ export const BILLING_PLANS: BillingPlan[] = [
     clientLimit: 5,
     reviewsPerLink: 500,
     description:
-      "5 active review links with 500 curated Google reviews each month, or 6,000 on yearly billing, for growing multi-location businesses.",
+      "5 active review links with 500 curated Google review scripts each month, or 6,000 on yearly billing, for growing multi-location businesses.",
     highlights: [
       "5 active review links",
-      "500 reviews per month or 6,000 per year",
+      "500 scripts per month or 6,000 per year",
       "Best for growing multi-location brands",
     ],
   },
@@ -44,10 +60,10 @@ export const BILLING_PLANS: BillingPlan[] = [
     clientLimit: null,
     reviewsPerLink: null,
     description:
-      "Unlimited active review links with unlimited curated Google reviews for agencies and large portfolios.",
+      "Unlimited active review links with unlimited curated Google review scripts for agencies and large portfolios.",
     highlights: [
       "Unlimited active review links",
-      "Unlimited reviews on every billing cycle",
+      "Unlimited scripts on every billing cycle",
       "Built for agencies and large portfolios",
     ],
   },
@@ -66,7 +82,7 @@ export function getClientLimitForTier(tier: SubscriptionTier) {
 }
 
 export function getPriceForPlan(
-  tier: Exclude<SubscriptionTier, "none">,
+  tier: PaidSubscriptionTier,
   interval: BillingInterval,
 ) {
   const plan = getBillingPlan(tier);
@@ -202,13 +218,13 @@ export function getReviewCapacityLabel(
   interval: BillingInterval = "monthly",
 ) {
   if (reviewsPerLink === null) {
-    return "Unlimited curated reviews";
+    return "Unlimited review scripts";
   }
 
   const reviewCapacity = getReviewCapacityForInterval(reviewsPerLink, interval);
   const periodLabel = interval === "yearly" ? "per year" : "per month";
 
-  return `${reviewCapacity?.toLocaleString("en-IN")} curated reviews ${periodLabel}`;
+  return `${reviewCapacity?.toLocaleString("en-IN")} review scripts ${periodLabel}`;
 }
 
 export function toDateInputValue(value?: string | Date | null) {

@@ -3,6 +3,12 @@ import User from "@/models/User";
 import BillingEvent from "@/models/BillingEvent";
 import { connectToDatabase } from "@/lib/db";
 import {
+  FREE_MONTHLY_LINK_LIMIT,
+  FREE_REVIEWS_PER_LINK,
+  getCurrentMonthBounds,
+  getCurrentMonthKey,
+} from "@/lib/free-tier";
+import {
   addBillingInterval,
   canCreateClientForTier,
   getBillingPlan,
@@ -15,6 +21,7 @@ import {
   type BillingInterval,
   type BillingSummary,
   type ClientExpiryMode,
+  type PaidSubscriptionTier,
   type SubscriptionTier,
 } from "@/types";
 
@@ -106,57 +113,118 @@ export async function updateBillingContactForUser(userId: string, phone: string)
   await User.findByIdAndUpdate(userId, { phone });
 }
 
+export async function activateFreeSubscriptionForUser(userId: string) {
+  await connectToDatabase();
+
+  const now = new Date();
+  const currentPeriodEnd = addBillingInterval(now, "monthly");
+
+  await User.findByIdAndUpdate(userId, {
+    subscriptionTier: "free",
+    subscriptionInterval: "monthly",
+    subscriptionStatus: "active",
+    subscriptionAutoRenew: false,
+    subscriptionCurrentPeriodStart: now,
+    subscriptionCurrentPeriodEnd: currentPeriodEnd,
+    pendingSubscriptionTier: "none",
+    pendingSubscriptionInterval: "monthly",
+    cashfreeSubscriptionStatus: "FREE_ACTIVE",
+  });
+
+  await Client.updateMany(
+    { userId, expiryMode: "subscription" },
+    { expiresAt: currentPeriodEnd },
+  );
+
+  return {
+    currentPeriodStart: now,
+    currentPeriodEnd,
+  };
+}
+
 export async function requireActiveSubscriptionForUser(userId: string) {
   await connectToDatabase();
 
   const user = (await User.findById(userId).lean()) as any;
 
-  if (!user || !hasSubscriptionAccess(user)) {
-    throw new Error(
-      "An active subscription is required before you can create or manage review links.",
-    );
+  if (!user) {
+    throw new Error("User not found.");
   }
 
   return user;
 }
 
 export async function assertCanCreateClientForUser(userId: string) {
-  const summary = await getBillingSummaryForUser(userId);
+  await connectToDatabase();
 
-  if (summary.status !== "active") {
+  const user = await User.exists({ _id: userId });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  const usage = await getFreeTierUsageForUser(userId);
+
+  if (!usage.canCreateLink) {
     throw new Error(
-      "Your subscription is inactive. Complete billing to create review links.",
+      `Free tier allows ${FREE_MONTHLY_LINK_LIMIT} review links per month. You can create another link next month.`,
     );
   }
 
-  if (!summary.canCreateClient) {
-    const limitLabel =
-      summary.clientLimit === null ? "unlimited" : `${summary.clientLimit}`;
+  await User.findByIdAndUpdate(userId, {
+    freeLinkQuotaMonth: getCurrentMonthKey(),
+    freeLinksCreatedThisMonth: usage.linksCreatedThisMonth + 1,
+  });
 
-    throw new Error(
-      `Your current plan supports ${limitLabel} active review links. Upgrade to add more.`,
-    );
-  }
+  return {
+    canCreateClient: usage.canCreateLink,
+  };
+}
 
-  return summary;
+export async function getFreeTierUsageForUser(userId: string) {
+  await connectToDatabase();
+
+  const { monthStart, nextMonthStart } = getCurrentMonthBounds();
+  const monthKey = getCurrentMonthKey();
+  const [user, existingLinksCreatedThisMonth] = await Promise.all([
+    User.findById(userId).lean(),
+    Client.countDocuments({
+      userId,
+      createdAt: {
+        $gte: monthStart,
+        $lt: nextMonthStart,
+      },
+    }),
+  ]);
+
+  const recordedLinksCreatedThisMonth =
+    (user as any)?.freeLinkQuotaMonth === monthKey
+      ? Number((user as any).freeLinksCreatedThisMonth || 0)
+      : 0;
+  const linksCreatedThisMonth = Math.max(
+    recordedLinksCreatedThisMonth,
+    existingLinksCreatedThisMonth,
+  );
+
+  return {
+    linksCreatedThisMonth,
+    monthlyLinkLimit: FREE_MONTHLY_LINK_LIMIT,
+    reviewsPerLink: FREE_REVIEWS_PER_LINK,
+    canCreateLink: linksCreatedThisMonth < FREE_MONTHLY_LINK_LIMIT,
+    monthStart: monthStart.toISOString(),
+    nextMonthStart: nextMonthStart.toISOString(),
+  };
 }
 
 export async function resolveClientExpiryForUser(
   userId: string,
   requestedExpiry?: string,
-): Promise<{ expiresAt: Date; expiryMode: ClientExpiryMode }> {
-  const user = await requireActiveSubscriptionForUser(userId);
-  const subscriptionEnd = user.subscriptionCurrentPeriodEnd
-    ? new Date(user.subscriptionCurrentPeriodEnd)
-    : null;
-
-  if (!subscriptionEnd) {
-    throw new Error("No active billing period found for this account.");
-  }
+): Promise<{ expiresAt: Date | null; expiryMode: ClientExpiryMode }> {
+  await requireActiveSubscriptionForUser(userId);
 
   if (!requestedExpiry) {
     return {
-      expiresAt: subscriptionEnd,
+      expiresAt: null,
       expiryMode: "subscription",
     };
   }
@@ -167,12 +235,6 @@ export async function resolveClientExpiryForUser(
     throw new Error("Link expiry date must be in the future.");
   }
 
-  if (expiresAt.getTime() > subscriptionEnd.getTime()) {
-    throw new Error(
-      "Link expiry cannot be later than your current subscription end date.",
-    );
-  }
-
   return {
     expiresAt,
     expiryMode: "custom",
@@ -181,7 +243,7 @@ export async function resolveClientExpiryForUser(
 
 export async function applySuccessfulSubscriptionForUser(options: {
   userId: string;
-  tier: Exclude<SubscriptionTier, "none">;
+  tier: PaidSubscriptionTier;
   interval: BillingInterval;
   cashfreeSubscriptionId?: string;
   cashfreeCfSubscriptionId?: string;
@@ -240,7 +302,7 @@ export async function applySuccessfulSubscriptionForUser(options: {
 
 export async function markPendingSubscriptionForUser(options: {
   userId: string;
-  tier: Exclude<SubscriptionTier, "none">;
+  tier: PaidSubscriptionTier;
   interval: BillingInterval;
   phone: string;
   cashfreeSubscriptionId?: string;

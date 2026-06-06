@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { ClientForm } from "@/components/clients/client-form";
 import { requireClientUser } from "@/lib/auth";
-import { getBillingSummaryForUser } from "@/lib/services/billing-service";
 import { getClientForUser } from "@/lib/services/client-service";
 
 type EditClientPageProps = {
@@ -13,10 +12,7 @@ type EditClientPageProps = {
 export default async function EditClientPage({ params }: EditClientPageProps) {
   const user = await requireClientUser();
   const { clientId } = await params;
-  const [billing, client] = await Promise.all([
-    getBillingSummaryForUser(user.userId),
-    getClientForUser(user.userId, clientId),
-  ]);
+  const client = await getClientForUser(user.userId, clientId);
 
   if (!client) {
     notFound();
@@ -42,7 +38,6 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
           expiresAt: client.expiresAt?.slice(0, 10) || "",
           googleReviewLink: client.googleReviewLink,
         }}
-        maxExpiryDate={billing.currentPeriodEnd}
       />
     </div>
   );

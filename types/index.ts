@@ -32,12 +32,14 @@ export type ReviewCategory = (typeof REVIEW_CATEGORIES)[number];
 
 export const SUBSCRIPTION_TIERS = [
   "none",
+  "free",
   "tier_1",
   "tier_2",
   "tier_3",
 ] as const;
 
 export type SubscriptionTier = (typeof SUBSCRIPTION_TIERS)[number];
+export type PaidSubscriptionTier = Exclude<SubscriptionTier, "none" | "free">;
 
 export const USER_ROLES = ["client", "admin"] as const;
 
@@ -90,6 +92,7 @@ export type DashboardClient = {
   isExpired: boolean;
   googleReviewLink: string;
   clickCount: number;
+  viewCount: number;
   reviewCount: number;
   createdAt: string;
 };
@@ -105,6 +108,7 @@ export type PublicClientPayload = {
   googleReviewLink: string;
   slug: string;
   clickCount: number;
+  viewCount: number;
 };
 
 export type PublicClientAvailability =

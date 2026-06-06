@@ -25,6 +25,13 @@ const userSchema = new Schema(
       sparse: true,
       default: null,
     },
+    supabaseUserId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: null,
+      trim: true,
+    },
     name: {
       type: String,
       default: "",
@@ -104,6 +111,15 @@ const userSchema = new Schema(
       type: String,
       default: "",
       trim: true,
+    },
+    freeLinkQuotaMonth: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    freeLinksCreatedThisMonth: {
+      type: Number,
+      default: 0,
     },
   },
   {

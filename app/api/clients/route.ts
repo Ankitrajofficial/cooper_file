@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/auth";
+import { resolveAppOrigin } from "@/lib/request-origin";
+import { sendLinkCreatedEmail } from "@/lib/services/email-service";
 import {
   createClientForUser,
   listClientsForUser,
@@ -26,6 +28,17 @@ export async function POST(request: Request) {
     const body = await request.json();
     const input = validateClientInput(body);
     const client = await createClientForUser(user.userId, input);
+    const publicReviewUrl = `${resolveAppOrigin(request)}/review/${client.slug}`;
+
+    try {
+      await sendLinkCreatedEmail({
+        email: user.email,
+        businessName: client.businessName,
+        publicReviewUrl,
+      });
+    } catch {
+      // Email should not block link creation.
+    }
 
     return NextResponse.json(
       {
@@ -46,4 +59,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

@@ -7,17 +7,21 @@ import { formatDate } from "@/lib/utils";
 export const metadata: Metadata = {
   title: `Contact Us | ${legalConfig.brandName}`,
   description:
-    `Find support, billing, and compliance contact details for ${legalConfig.brandName}.`,
+    `Find support, account, and compliance contact details for ${legalConfig.brandName}.`,
 };
 
 export default function ContactUsPage() {
   return (
     <LegalPageShell
       title="Contact Us"
-      description={`Use this page for support, billing, cancellation, grievance, and legal communication related to ${legalConfig.brandName}.`}
+      description={`Use this page for support, account, cancellation, grievance, and legal communication related to ${legalConfig.brandName}.`}
     >
-      <LegalSection title="1. Support and Billing Contact">
+      <LegalSection title="1. Support and Account Contact">
         <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-5">
+          <p>
+            <span className="font-semibold text-slate-900">Product:</span>{" "}
+            {legalConfig.brandName}, a product of {legalConfig.parentCompany}
+          </p>
           <p>
             <span className="font-semibold text-slate-900">Business name:</span>{" "}
             {legalConfig.legalEntity}
@@ -60,7 +64,7 @@ export default function ContactUsPage() {
       <LegalSection title="3. What to Include in Your Message">
         <ul className="list-disc space-y-2 pl-5">
           <li>your full name and registered email address;</li>
-          <li>subscription or transaction reference, if relevant;</li>
+          <li>account, link, or transaction reference, if relevant;</li>
           <li>a short description of the issue or request;</li>
           <li>supporting screenshots or timeline details where useful.</li>
         </ul>

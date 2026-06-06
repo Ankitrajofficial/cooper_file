@@ -2,6 +2,7 @@ import {
   BILLING_INTERVALS,
   BUSINESS_SECTORS,
   SUBSCRIPTION_TIERS,
+  type PaidSubscriptionTier,
 } from "@/types";
 import { normalizeExternalUrl } from "@/lib/utils";
 import { type ClientFormInput } from "@/types";
@@ -92,8 +93,12 @@ export function validateBillingSelection(input: {
   tier?: string;
   interval?: string;
 }) {
-  if (!SUBSCRIPTION_TIERS.includes((input.tier || "") as any) || input.tier === "none") {
-    throw new Error("Please choose a valid subscription tier.");
+  if (
+    !SUBSCRIPTION_TIERS.includes((input.tier || "") as any) ||
+    input.tier === "none" ||
+    input.tier === "free"
+  ) {
+    throw new Error("Please choose a valid paid subscription tier.");
   }
 
   if (!BILLING_INTERVALS.includes((input.interval || "") as any)) {
@@ -101,7 +106,7 @@ export function validateBillingSelection(input: {
   }
 
   return {
-    tier: input.tier as Exclude<(typeof SUBSCRIPTION_TIERS)[number], "none">,
+    tier: input.tier as PaidSubscriptionTier,
     interval: input.interval as (typeof BILLING_INTERVALS)[number],
   };
 }

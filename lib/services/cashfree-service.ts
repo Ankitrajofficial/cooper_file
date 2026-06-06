@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { getPriceForPlan } from "@/lib/billing";
-import { type BillingInterval, type SubscriptionTier } from "@/types";
+import { type BillingInterval, type PaidSubscriptionTier } from "@/types";
 
 const CASHFREE_API_VERSION = "2025-01-01";
 
@@ -100,7 +100,7 @@ export async function createCashfreeSubscription(options: {
   email: string;
   name: string;
   phone: string;
-  tier: Exclude<SubscriptionTier, "none">;
+  tier: PaidSubscriptionTier;
   interval: BillingInterval;
   appUrl?: string;
 }) {
@@ -127,7 +127,7 @@ export async function createCashfreeSubscription(options: {
         customer_phone: options.phone,
       },
       plan_details: {
-        plan_name: `Review Machine ${options.tier} ${options.interval}`,
+        plan_name: `Cooperfile ${options.tier} ${options.interval}`,
         plan_type: "PERIODIC",
         plan_amount: amount,
         plan_max_amount: amount,

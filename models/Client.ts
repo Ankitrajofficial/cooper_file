@@ -61,6 +61,18 @@ const clientSchema = new Schema(
       type: Number,
       default: 0,
     },
+    viewCount: {
+      type: Number,
+      default: 0,
+    },
+    lastClickedAt: {
+      type: Date,
+      default: null,
+    },
+    lastViewedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: {

@@ -29,7 +29,6 @@ export function SiteHeader({
   const navLinks = [
     { href: "#features", label: "Features" },
     { href: "#how-it-works", label: "How it works" },
-    { href: "#pricing", label: "Pricing" },
     { href: "#proof", label: "Proof" },
   ];
 

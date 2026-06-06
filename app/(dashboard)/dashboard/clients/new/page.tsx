@@ -1,10 +1,8 @@
 import { ClientForm } from "@/components/clients/client-form";
 import { requireClientUser } from "@/lib/auth";
-import { getBillingSummaryForUser } from "@/lib/services/billing-service";
 
 export default async function NewClientPage() {
-  const user = await requireClientUser();
-  const billing = await getBillingSummaryForUser(user.userId);
+  await requireClientUser();
 
   return (
     <div className="space-y-4">
@@ -14,7 +12,7 @@ export default async function NewClientPage() {
           Save a business profile and instantly create a shareable public review link.
         </p>
       </div>
-      <ClientForm mode="create" maxExpiryDate={billing.currentPeriodEnd} />
+      <ClientForm mode="create" />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/auth";
-import { requireActiveSubscriptionForUser } from "@/lib/services/billing-service";
-import { generateReviewsForClient } from "@/lib/services/ai-service";
+import { FREE_REVIEWS_PER_LINK } from "@/lib/free-tier";
+import Review from "@/models/Review";
 import { getClientForUser } from "@/lib/services/client-service";
+import { buildScriptedReviews } from "@/lib/services/review-service";
 
 type RouteContext = {
   params: Promise<{
@@ -13,7 +14,6 @@ type RouteContext = {
 export async function POST(_: Request, context: RouteContext) {
   try {
     const user = await requireApiUser();
-    await requireActiveSubscriptionForUser(user.userId);
     const { clientId } = await context.params;
     const client = await getClientForUser(user.userId, clientId);
 
@@ -21,19 +21,27 @@ export async function POST(_: Request, context: RouteContext) {
       return NextResponse.json({ error: "Client not found." }, { status: 404 });
     }
 
-    const count = await generateReviewsForClient({
-      clientId: client.id,
+    const reviews = buildScriptedReviews({
       businessName: client.businessName,
       city: client.city,
       sector: client.sector,
       industry: client.industry,
       businessDescription: client.businessDescription,
-      count: 40,
-    });
+    }, FREE_REVIEWS_PER_LINK);
+
+    await Review.deleteMany({ clientId: client.id });
+    await Review.insertMany(
+      reviews.map((review) => ({
+        clientId: client.id,
+        category: review.category,
+        text: review.text,
+      })),
+    );
 
     return NextResponse.json({
       success: true,
-      message: `${count} review scripts generated.`,
+      count: reviews.length,
+      message: `${reviews.length} backend review scripts generated.`,
     });
   } catch (error) {
     const message =

@@ -96,6 +96,169 @@ export function buildStarterReviews(context: ReviewTemplateContext): ReviewSeed[
   );
 }
 
+const CATEGORY_SCRIPT_DETAILS: Record<ReviewCategory, string[]> = {
+  General: [
+    "The overall experience felt smooth, professional, and easy to trust.",
+    "Everything was handled with care, and the process felt simple from start to finish.",
+    "The business gives a reliable impression and delivers a customer-friendly experience.",
+    "It feels like a dependable local option for people who want quality and consistency.",
+  ],
+  "Study Environment": [
+    "The environment feels calm, organized, and suitable for focused study.",
+    "The setup is practical for students who need fewer distractions and steady routines.",
+    "The space supports a productive daily schedule and feels thoughtfully managed.",
+    "It creates a balanced atmosphere for students who want comfort and focus together.",
+  ],
+  Safety: [
+    "The place feels well managed, secure, and reassuring for customers.",
+    "The attention to safety and proper handling adds confidence to the experience.",
+    "The setup feels organized in a way that gives customers peace of mind.",
+    "Safety and basic management are treated seriously, which makes a real difference.",
+  ],
+  Food: [
+    "The food experience adds convenience and makes the visit more satisfying.",
+    "The quality and consistency of the food support a better overall experience.",
+    "The food service feels practical, comfortable, and useful for regular customers.",
+    "It is clear that food and hospitality are part of the complete customer experience.",
+  ],
+  "Service Quality": [
+    "The service feels attentive, organized, and consistent.",
+    "The team responds well and keeps the customer experience smooth.",
+    "The work is handled with proper attention to detail and clear communication.",
+    "The service quality stands out because the experience feels dependable.",
+  ],
+  "Staff & Support": [
+    "The staff are polite, responsive, and easy to speak with.",
+    "The support from the team makes the whole experience more comfortable.",
+    "The people here are helpful and make customers feel properly guided.",
+    "The team gives clear support and maintains a professional approach.",
+  ],
+  Cleanliness: [
+    "The place feels clean, maintained, and pleasant to visit.",
+    "Cleanliness and upkeep are handled well, which creates a strong first impression.",
+    "The environment is neat and organized, making the experience more comfortable.",
+    "The attention to cleanliness adds trust and makes the business feel well managed.",
+  ],
+  Comfort: [
+    "The experience feels comfortable, practical, and thoughtfully arranged.",
+    "The overall setup makes the visit easy and pleasant.",
+    "There is a good balance of comfort, service, and convenience.",
+    "The business creates a relaxed experience without losing professionalism.",
+  ],
+  "Treatment Experience": [
+    "The consultation experience feels calm, professional, and properly guided.",
+    "The care and communication make the visit feel reassuring.",
+    "The process is handled patiently, which helps customers feel comfortable.",
+    "The treatment experience feels organized, respectful, and dependable.",
+  ],
+  Ambience: [
+    "The ambience feels welcoming and adds to the overall experience.",
+    "The atmosphere is pleasant, comfortable, and easy to appreciate.",
+    "The setting creates a positive impression from the moment customers arrive.",
+    "The ambience supports a better customer experience and feels well maintained.",
+  ],
+  Value: [
+    "The service feels worth the time because the quality and support are consistent.",
+    "The overall value is strong when you consider the experience and attention to detail.",
+    "It feels like a practical choice for customers who want dependable quality.",
+    "The business offers good value through reliable service and a smooth experience.",
+  ],
+};
+
+const SCRIPT_OPENERS = [
+  "I had a very good experience with {businessName} in {city}.",
+  "{businessName} has been a reliable choice in {city}.",
+  "My experience with {businessName} was positive from the beginning.",
+  "I was happy with the way {businessName} handled the overall experience.",
+  "{businessName} stands out as a dependable {industry} in {city}.",
+  "I found {businessName} to be professional, helpful, and easy to trust.",
+  "The experience at {businessName} felt well managed and customer focused.",
+  "{businessName} made the process simple and comfortable.",
+];
+
+const SCRIPT_CLOSERS = [
+  "I would recommend this {industry} to anyone looking for a trusted option in {city}.",
+  "It is a good choice for customers who value service, quality, and consistency.",
+  "I would be comfortable choosing them again and recommending them to others.",
+  "For anyone searching in {city}, this business is worth considering.",
+  "The experience felt genuine, useful, and easy to recommend.",
+  "It is a strong local option for people who want dependable service.",
+  "The quality and support make it an easy business to recommend.",
+  "Overall, it was a smooth and satisfying customer experience.",
+];
+
+const SCRIPT_CONTEXT_LINES = [
+  "The business understands what customers expect and keeps the experience practical.",
+  "The team pays attention to details that make the final experience better.",
+  "Communication was clear, and the service felt professional throughout.",
+  "The overall approach feels honest, steady, and customer friendly.",
+  "The experience combines local convenience with dependable service.",
+  "The team keeps things simple while still maintaining good quality.",
+  "The work and support feel consistent, which is important for customers.",
+  "The service has a polished feel without becoming complicated.",
+];
+
+function pickRotating<T>(items: T[], index: number, offset = 0) {
+  return items[(index + offset) % items.length];
+}
+
+export function buildScriptedReviews(
+  context: ReviewTemplateContext,
+  count = 100,
+): ReviewSeed[] {
+  const targetCount = Math.max(1, Math.min(count, 250));
+  const categories = getCategoriesForSector(context.sector);
+
+  return Array.from({ length: targetCount }, (_, index) => {
+    const category = pickRotating(categories, index);
+    const categoryDetails = CATEGORY_SCRIPT_DETAILS[category];
+    const opener = pickRotating(SCRIPT_OPENERS, index);
+    const detail = pickRotating(categoryDetails, index, Math.floor(index / categories.length));
+    const contextLine = pickRotating(SCRIPT_CONTEXT_LINES, index, category.length);
+    const closer = pickRotating(SCRIPT_CLOSERS, index, categoryDetails.length);
+
+    return {
+      category,
+      text: fillTemplate(
+        `${opener} ${detail} ${contextLine} ${closer}`,
+        context,
+      ),
+    };
+  });
+}
+
+const RATING_REVIEW_TEMPLATES: Record<number, string[]> = {
+  1: [
+    "My experience with {businessName} in {city} was disappointing overall. There were a few basic positives, but the service and overall experience did not meet what I expected from this {industry}.",
+    "I had a poor experience with {businessName}. I hope the team can improve consistency, communication, and customer support for people visiting this {industry} in {city}.",
+  ],
+  2: [
+    "My experience with {businessName} in {city} could have been better. Some parts were fine, but the overall service felt inconsistent and left room for improvement.",
+    "{businessName} has potential, but my visit did not fully meet expectations. The team could improve the customer experience and make the service feel more reliable.",
+  ],
+  3: [
+    "My experience with {businessName} in {city} was okay overall. There were some helpful parts, but a few things could be improved to make this {industry} feel more consistent.",
+    "{businessName} delivered a fair experience. It worked for what I needed, though better service flow and attention to detail would make the visit stronger.",
+  ],
+  4: [
+    "I had a good experience with {businessName} in {city}. The team was helpful, the service felt smooth, and this {industry} is worth considering if you are nearby.",
+    "{businessName} gave me a positive overall experience. A few small things could be refined, but the service, support, and local convenience were strong.",
+  ],
+  5: [
+    "I had an excellent experience with {businessName} in {city}. The team was professional, the service felt smooth, and I would happily recommend this {industry} to others.",
+    "{businessName} really stood out for its helpful service and reliable experience. It is a strong choice in {city} for anyone looking for a dependable {industry}.",
+  ],
+};
+
+export function buildRatingReviewOptions(
+  context: ReviewTemplateContext & { rating: number },
+) {
+  const templates =
+    RATING_REVIEW_TEMPLATES[context.rating] ?? RATING_REVIEW_TEMPLATES[5];
+
+  return templates.map((template) => fillTemplate(template, context));
+}
+
 export function getCategoriesForSector(sector: BusinessSector) {
   return SECTOR_CATEGORY_MAP[sector] ?? SECTOR_CATEGORY_MAP["General Business"];
 }

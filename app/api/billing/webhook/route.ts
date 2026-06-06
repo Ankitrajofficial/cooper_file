@@ -7,7 +7,29 @@ import {
   updateSubscriptionStateByCashfreeId,
 } from "@/lib/services/billing-service";
 import { verifyCashfreeWebhookSignature } from "@/lib/services/cashfree-service";
-import { type BillingInterval, type SubscriptionTier } from "@/types";
+import {
+  type BillingInterval,
+  type PaidSubscriptionTier,
+  type SubscriptionTier,
+} from "@/types";
+
+function resolvePaidTierFromUser(user: {
+  pendingSubscriptionTier?: SubscriptionTier | string | null;
+  subscriptionTier?: SubscriptionTier | string | null;
+}): PaidSubscriptionTier {
+  const pendingTier = user.pendingSubscriptionTier as SubscriptionTier | undefined;
+  const currentTier = user.subscriptionTier as SubscriptionTier | undefined;
+
+  if (pendingTier && pendingTier !== "none" && pendingTier !== "free") {
+    return pendingTier;
+  }
+
+  if (currentTier && currentTier !== "none" && currentTier !== "free") {
+    return currentTier;
+  }
+
+  return "tier_1";
+}
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -63,17 +85,14 @@ export async function POST(request: Request) {
     }
 
     if (eventType === "SUBSCRIPTION_PAYMENT_SUCCESS") {
-      const tier =
-        ((user.pendingSubscriptionTier || user.subscriptionTier) as SubscriptionTier) === "none"
-          ? "tier_1"
-          : (user.pendingSubscriptionTier || user.subscriptionTier);
+      const tier = resolvePaidTierFromUser(user);
       const interval = (user.pendingSubscriptionInterval ||
         user.subscriptionInterval ||
         "monthly") as BillingInterval;
 
       await applySuccessfulSubscriptionForUser({
         userId: user._id.toString(),
-        tier: tier as Exclude<SubscriptionTier, "none">,
+        tier,
         interval,
         cashfreeSubscriptionId: subscriptionId,
         cashfreeCfSubscriptionId: cfSubscriptionId,
@@ -89,17 +108,14 @@ export async function POST(request: Request) {
       );
 
       if (remoteStatus === "ACTIVE") {
-        const tier =
-          ((user.pendingSubscriptionTier || user.subscriptionTier) as SubscriptionTier) === "none"
-            ? "tier_1"
-            : (user.pendingSubscriptionTier || user.subscriptionTier);
+        const tier = resolvePaidTierFromUser(user);
         const interval = (user.pendingSubscriptionInterval ||
           user.subscriptionInterval ||
           "monthly") as BillingInterval;
 
         await applySuccessfulSubscriptionForUser({
           userId: user._id.toString(),
-          tier: tier as Exclude<SubscriptionTier, "none">,
+          tier,
           interval,
           cashfreeSubscriptionId: subscriptionId,
           cashfreeCfSubscriptionId: cfSubscriptionId,

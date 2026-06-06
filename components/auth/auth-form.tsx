@@ -1,10 +1,10 @@
 "use client";
 
 import type { Route } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resolveSafePostAuthRedirect } from "@/lib/auth-redirect";
@@ -25,12 +25,13 @@ export function AuthForm({ mode, audience = "client" }: AuthFormProps) {
   const isLogin = mode === "login";
   const isAdmin = audience === "admin";
   const oauthError = searchParams.get("error");
+  const authMessage = searchParams.get("message");
   const visibleError = error || oauthError || "";
   const benefitBullets = isAdmin
     ? [
-        "Manage client plans and manual access",
+        "Manage client access and manual links",
         "Track review clicks and portfolio activity",
-        "Control subscriptions and client links centrally",
+        "Control client links centrally",
       ]
     : [
         "Launch your first Google review funnel in minutes",
@@ -94,19 +95,10 @@ export function AuthForm({ mode, audience = "client" }: AuthFormProps) {
 
         <div className="relative">
           <div className="flex items-center gap-3">
-            <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950 shadow-lg">
-              <Image
-                src="/review-machine-logo.png"
-                alt={`${isAdmin ? "Admin" : "Client"} logo`}
-                width={48}
-                height={48}
-                className="h-11 w-11 object-cover"
-                priority
-              />
-            </div>
+            <BrandMark />
             <div>
               <p className="text-sm font-bold tracking-tight text-white">
-                {isAdmin ? "Review Engine Admin" : "Review Engine"}
+                Cooperfile
               </p>
               <p className="text-[11px] text-slate-400">
                 {isAdmin ? "Control panel" : "Client workspace"}
@@ -122,10 +114,10 @@ export function AuthForm({ mode, audience = "client" }: AuthFormProps) {
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-400">
             {isAdmin
-              ? "Sign in to manage client subscriptions, links, and performance from one control panel."
+              ? "Sign in to manage client links and performance from one control panel."
               : isLogin
-                ? "Sign in to manage your review engine workspace."
-                : "Create your account, choose a plan, and start building review links."}
+                ? "Sign in to manage your Cooperfile workspace."
+                : "Create your account and start building review links."}
           </p>
           <div className="mt-4 space-y-2">
             {benefitBullets.map((item) => (
@@ -175,6 +167,12 @@ export function AuthForm({ mode, audience = "client" }: AuthFormProps) {
           {visibleError ? (
             <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
               {visibleError}
+            </div>
+          ) : null}
+
+          {authMessage && !visibleError ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              {authMessage}
             </div>
           ) : null}
 
@@ -238,14 +236,6 @@ export function AuthForm({ mode, audience = "client" }: AuthFormProps) {
                 {isLogin ? "Sign up" : "Login"}
               </Link>
             </p>
-            {isLogin ? (
-              <p className="text-xs text-slate-500">
-                Need admin access?{" "}
-                <Link href="/admin/login" className="font-semibold text-brand transition hover:text-brand-dark">
-                  Admin login
-                </Link>
-              </p>
-            ) : null}
           </div>
         ) : (
           <p className="mt-5 text-center text-sm text-slate-600">

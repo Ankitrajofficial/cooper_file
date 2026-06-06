@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
-import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 
 export function DashboardShell({
@@ -12,7 +11,6 @@ export function DashboardShell({
 }) {
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--surface-base)]">
-      {/* ─── Glassmorphism header ─── */}
       <header className="sticky top-0 z-20 w-full max-w-full overflow-x-clip border-b border-[rgba(188,201,198,0.15)] bg-white/80 px-4 backdrop-blur-xl backdrop-saturate-[1.3] sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 py-3 sm:gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-5">
@@ -55,47 +53,8 @@ export function DashboardShell({
         </div>
       </header>
 
-      {/* Mobile nav */}
-      <div className="w-full max-w-full overflow-x-hidden border-b border-[rgba(188,201,198,0.12)] px-4 py-2 sm:px-6 lg:hidden lg:px-8">
-        <DashboardNav />
-      </div>
-
-      <main className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8 lg:py-8">
-        <aside className="hidden lg:block">
-          <div className="sticky top-20 space-y-5">
-            <DashboardNav />
-
-            {/* ─── Quick Tip (Stitch tonal card) ─── */}
-            <div className="surface-card p-5">
-              <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-brand/10 to-brand/5">
-                  <svg className="h-3.5 w-3.5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-                  </svg>
-                </div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--on-surface-variant)]">
-                  Quick tip
-                </p>
-              </div>
-              <h3 className="mt-3 text-sm font-semibold text-[var(--on-surface)]">
-                Share one link per client
-              </h3>
-              <p className="mt-1.5 text-xs leading-5 text-[var(--on-surface-variant)]">
-                Generate fresh review scripts, copy the public page URL, and
-                send it directly to customers after their visit.
-              </p>
-            </div>
-
-            {/* ─── Keyboard shortcut hint ─── */}
-            <div className="rounded-xl bg-[var(--surface-low)] p-4">
-              <p className="text-[11px] font-medium text-[var(--on-surface-variant)]">
-                Pro tip: Use the AI review generator to create natural-sounding,
-                SEO-optimized review scripts tailored to each business.
-              </p>
-            </div>
-          </div>
-        </aside>
-        <section className="min-w-0">{children}</section>
+      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        {children}
       </main>
     </div>
   );

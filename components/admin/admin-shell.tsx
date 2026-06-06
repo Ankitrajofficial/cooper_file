@@ -36,7 +36,7 @@ export function AdminShell({
               </span>
               Full control access
             </div>
-            <LogoutButton redirectTo="/admin/login" />
+            <LogoutButton redirectTo="/login" />
           </div>
         </div>
       </header>

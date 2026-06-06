@@ -1,15 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getPostLoginRedirectPath, getSession } from "@/lib/auth";
-import {
-  BILLING_PLANS,
-  formatInr,
-  getReviewCapacityForInterval,
-  getReviewCapacityLabel,
-} from "@/lib/billing";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { Button } from "@/components/ui/button";
+import { legalConfig } from "@/lib/legal";
 
 /* ─── Feature data ─── */
 
@@ -174,6 +169,14 @@ const testimonials = [
   },
 ];
 
+const legalLinks = [
+  { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/terms-and-conditions", label: "Terms & Conditions" },
+  { href: "/refunds-and-cancellations", label: "Refunds & Cancellations" },
+  { href: "/shipping-and-delivery", label: "Shipping & Delivery" },
+  { href: "/contact-us", label: "Contact Us" },
+] as const;
+
 /* ─── Page ─── */
 
 export default async function HomePage() {
@@ -187,6 +190,20 @@ export default async function HomePage() {
     <div className="min-h-screen">
       {/* ─── HERO ─── */}
       <section className="hero-gradient relative flex min-h-screen flex-col overflow-hidden">
+        {/* Background video */}
+        <video
+          className="absolute inset-0 z-0 h-full w-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+        >
+          <source src="/hero-bg.mp4" type="video/mp4" />
+        </video>
+        {/* Dark overlay to keep text legible — darker toward the bottom where content sits */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-slate-950/55 via-slate-950/60 to-slate-950/80" />
         <div className="absolute inset-0 premium-grid opacity-40" />
         {/* Ambient glow orbs */}
         <div className="absolute left-[15%] top-[10%] h-[500px] w-[500px] rounded-full bg-brand/[0.07] blur-[100px]" />
@@ -205,7 +222,7 @@ export default async function HomePage() {
                   <span className="flex h-2 w-2 rounded-full bg-emerald-400">
                     <span className="h-2 w-2 animate-ping rounded-full bg-emerald-400 opacity-75" />
                   </span>
-                  Trusted by 500+ businesses across India
+                  {legalConfig.brandName}, a product of {legalConfig.parentCompany}
                 </span>
               </div>
 
@@ -242,9 +259,9 @@ export default async function HomePage() {
               {/* Micro trust signals */}
               <div className="animate-fade-up-delay-4 flex flex-wrap gap-5 pt-2">
                 {[
+                  "Free: 2 links per month",
                   "Turn customers into rankings",
                   "10-second review flow",
-                  "Boost Google Maps visibility",
                 ].map((item) => (
                   <div
                     key={item}
@@ -277,7 +294,7 @@ export default async function HomePage() {
                   <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-muted">
-                        AI review engine
+                        Cooperfile AI
                       </p>
                       <p className="mt-0.5 text-sm font-semibold text-white">
                         Review Script Dashboard
@@ -369,199 +386,6 @@ export default async function HomePage() {
       </section>
 
       <main>
-        {/* ─── PRICING ─── */}
-        <section
-          id="pricing"
-          className="relative overflow-hidden px-4 py-20 sm:px-6 sm:py-28 lg:px-8"
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/80 to-transparent" />
-          <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/[0.02] blur-[100px]" />
-
-          <div className="relative mx-auto max-w-7xl">
-            <div className="flex flex-col items-center text-center">
-              <span className="inline-flex items-center gap-2 rounded-full bg-brand/[0.06] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-brand">
-                Pricing That Scales
-              </span>
-              <h2 className="mt-5 max-w-2xl text-3xl font-extrabold tracking-tight text-ink sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
-                Start with one AI review link.{" "}
-                <span className="gradient-text">Scale to unlimited.</span>
-              </h2>
-              <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-500">
-                Every plan includes AI-scripted review generation, branded
-                one-click review pages, and automatic billing. Pick yearly and
-                save 2 months.
-              </p>
-            </div>
-
-            <div className="mt-14 grid gap-6 xl:grid-cols-3">
-              {BILLING_PLANS.map((plan, index) => (
-                <article
-                  key={plan.tier}
-                  className={`card-hover relative rounded-2xl p-7 transition-all duration-300 animate-fade-up ${
-                    plan.tier === "tier_2"
-                      ? "border-2 border-brand/20 bg-slate-950 text-white shadow-[0_8px_40px_-12px_rgba(13,148,136,0.3)]"
-                      : "overflow-hidden bg-white text-ink shadow-ambient ghost-border-interactive hover:shadow-ambient-hover"
-                  }`}
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  {plan.tier === "tier_2" ? (
-                    <div className="absolute -top-3 right-6">
-                      <span className="rounded-full bg-gradient-to-r from-brand to-cyan-500 px-4 py-1.5 text-[11px] font-bold text-white shadow-glow">
-                        Most popular
-                      </span>
-                    </div>
-                  ) : null}
-
-                  <p
-                    className={`text-[11px] font-bold uppercase tracking-[0.2em] ${
-                      plan.tier === "tier_2" ? "text-brand-muted" : "text-brand"
-                    }`}
-                  >
-                    {plan.name}
-                  </p>
-
-                  <h3 className="mt-2 text-lg font-bold">
-                    {plan.tier === "tier_1"
-                      ? "Perfect for a single Google Business Profile"
-                      : plan.tier === "tier_2"
-                        ? "For growing brands with multiple locations"
-                        : "Built for agencies and large portfolios"}
-                  </h3>
-
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    <div
-                      className={`rounded-xl p-4 ${
-                        plan.tier === "tier_2"
-                          ? "bg-white/[0.04]"
-                          : "bg-[var(--surface-low)]"
-                      }`}
-                    >
-                      <p
-                        className={`text-[11px] font-medium ${
-                          plan.tier === "tier_2"
-                            ? "text-slate-400"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        Monthly
-                      </p>
-                      <p className="mt-1.5 text-3xl font-extrabold tracking-tight">
-                        {formatInr(plan.monthlyPriceInr)}
-                      </p>
-                    </div>
-                    <div
-                      className={`rounded-xl p-4 ${
-                        plan.tier === "tier_2"
-                          ? "bg-white/[0.04]"
-                          : "bg-[var(--surface-low)]"
-                      }`}
-                    >
-                      <p
-                        className={`text-[11px] font-medium ${
-                          plan.tier === "tier_2"
-                            ? "text-slate-400"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        Yearly
-                      </p>
-                      <p className="mt-1.5 text-3xl font-extrabold tracking-tight">
-                        {formatInr(plan.yearlyPriceInr)}
-                      </p>
-                      <p
-                        className={`mt-0.5 text-[11px] font-bold ${
-                          plan.tier === "tier_2"
-                            ? "text-brand-muted"
-                            : "text-brand"
-                        }`}
-                      >
-                        Save {formatInr(plan.monthlyPriceInr * 12 - plan.yearlyPriceInr)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Features */}
-                  <div className="mt-5 space-y-2">
-                    {[
-                      plan.clientLimit === null
-                        ? "Unlimited AI review links"
-                        : `${plan.clientLimit} active AI review ${plan.clientLimit === 1 ? "link" : "links"}`,
-                      plan.reviewsPerLink === null
-                        ? "Unlimited AI-scripted reviews"
-                        : `${getReviewCapacityForInterval(plan.reviewsPerLink, "monthly")?.toLocaleString("en-IN")} AI-scripted reviews / month · ${getReviewCapacityForInterval(plan.reviewsPerLink, "yearly")?.toLocaleString("en-IN")} / year`,
-                      plan.reviewsPerLink === null
-                        ? "Unlimited review capacity on yearly billing too"
-                        : `Yearly plan includes ${getReviewCapacityLabel(plan.reviewsPerLink, "yearly")}`,
-                      "Branded one-click review pages",
-                      "SEO-optimized review scripts",
-                      plan.tier === "tier_1"
-                        ? "Google review form redirect"
-                        : plan.tier === "tier_2"
-                          ? "Priority AI script generation"
-                          : "Dedicated priority support",
-                    ].map((item) => (
-                      <div
-                        key={item}
-                        className={`flex items-center gap-3 text-sm ${
-                          plan.tier === "tier_2"
-                            ? "text-slate-300"
-                            : "text-slate-600"
-                        }`}
-                      >
-                        <svg
-                          className={`h-4 w-4 shrink-0 ${
-                            plan.tier === "tier_2"
-                              ? "text-brand-muted"
-                              : "text-brand"
-                          }`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-7">
-                    <Link href="/signup">
-                      <Button
-                        fullWidth
-                        variant={plan.tier === "tier_2" ? "primary" : "secondary"}
-                      >
-                        Start with {plan.name}
-                      </Button>
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            {/* Trust row */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400">
-              {[
-                { icon: "🔒", text: "Secured by Cashfree" },
-                { icon: "↻", text: "Cancel anytime" },
-                { icon: "⚡", text: "Setup in 3 minutes" },
-              ].map((item) => (
-                <div key={item.text} className="flex items-center gap-2">
-                  <span>{item.icon}</span>
-                  <span>{item.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <div className="section-divider mx-auto max-w-7xl" />
-
         <div className="section-divider mx-auto max-w-7xl" />
 
         {/* ─── FEATURES (THE AI ADVANTAGE) ─── */}
@@ -583,7 +407,7 @@ export default async function HomePage() {
               </h2>
               <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-500">
                 Most businesses lose 95% of happy customers at the review stage.
-                Review Machine&apos;s AI writes natural, keyword-rich review scripts
+                Cooperfile&apos;s AI writes natural, keyword-rich review scripts
                 your customers can post in one click — turning every satisfied
                 customer into a ranking signal.
               </p>
@@ -915,6 +739,38 @@ export default async function HomePage() {
                     ))}
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── LEGAL LINKS ─── */}
+        <section className="px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200/80 bg-white p-6 shadow-ambient sm:p-8">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">
+                  Legal and policies
+                </p>
+                <h2 className="mt-2 text-xl font-extrabold tracking-tight text-ink sm:text-2xl">
+                  {legalConfig.productAttribution}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  Review our privacy, terms, refunds, delivery, and support
+                  information before creating your review links.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2 text-sm">
+                {legalLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-600 transition hover:border-brand/30 hover:text-brand"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>

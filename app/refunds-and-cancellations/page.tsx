@@ -6,50 +6,51 @@ import { formatDate } from "@/lib/utils";
 export const metadata: Metadata = {
   title: `Refunds and Cancellations | ${legalConfig.brandName}`,
   description:
-    `Read the cancellation and refund policy for ${legalConfig.brandName} subscriptions and recurring billing.`,
+    `Read the cancellation and refund policy for ${legalConfig.brandName}.`,
 };
 
 export default function RefundsAndCancellationsPage() {
   return (
     <LegalPageShell
       title="Refunds and Cancellations"
-      description={`This policy explains how subscription cancellations, renewals, and refund requests are handled for ${legalConfig.brandName}.`}
+      description={`This policy explains account cancellation and refund handling for ${legalConfig.brandName}.`}
     >
-      <LegalSection title="1. Subscription Billing">
+      <LegalSection title="1. No Paid Subscription Billing Currently">
         <p>
-          {legalConfig.brandName} is offered as a recurring subscription service. Charges are billed
-          in advance for the selected monthly or yearly billing period.
+          {legalConfig.brandName} is currently offered as a free review-link tool with free-tier
+          usage limits. We do not currently collect recurring subscription charges through the
+          product.
         </p>
       </LegalSection>
 
-      <LegalSection title="2. Cancellation Policy">
+      <LegalSection title="2. Account Cancellation">
         <p>
-          You may cancel your subscription before the next billing date to stop future renewals.
-          Cancellation does not normally reverse charges already processed for the current billing
-          cycle.
+          You may stop using the service at any time. You can also contact us through the Contact
+          Us page to request account closure or data deletion, subject to applicable legal and
+          operational retention requirements.
         </p>
         <p>
-          Unless otherwise stated, access remains available until the end of the paid billing period
-          already completed.
+          Closing an account may remove access to review links, QR codes, generated scripts, and
+          dashboard history associated with that account.
         </p>
       </LegalSection>
 
       <LegalSection title="3. Refund Policy">
         <p>
-          Subscription fees are generally non-refundable once a billing cycle has started, except
-          where required by applicable law or where a charge was duplicated, unauthorized, or caused
-          by a confirmed technical error on our side.
+          Because paid subscription billing is currently disabled, there are usually no subscription
+          fees to refund.
         </p>
         <p>
-          Refund requests are reviewed case by case. Approval may depend on transaction records,
-          service usage, subscription history, and the reason for the request.
+          If any manual, accidental, duplicate, or unauthorized payment is made to us, refund
+          requests will be reviewed case by case. Approval may depend on transaction records,
+          service usage, and the reason for the request.
         </p>
       </LegalSection>
 
       <LegalSection title="4. Situations Where Refunds May Be Considered">
         <ul className="list-disc space-y-2 pl-5">
-          <li>duplicate billing for the same subscription period;</li>
-          <li>an incorrect charge caused by a billing system error;</li>
+          <li>duplicate or accidental payment made to us;</li>
+          <li>an incorrect charge caused by a confirmed system error;</li>
           <li>an unauthorized transaction, subject to verification;</li>
           <li>any other case where a refund is required by applicable law.</li>
         </ul>
@@ -57,17 +58,18 @@ export default function RefundsAndCancellationsPage() {
 
       <LegalSection title="5. Situations Where Refunds Are Usually Not Provided">
         <ul className="list-disc space-y-2 pl-5">
-          <li>partial non-use of the service during an active subscription term;</li>
-          <li>change of mind after the current billing cycle has started;</li>
+          <li>non-use of free features;</li>
+          <li>requests where no payment was collected by us;</li>
           <li>issues caused by third-party services outside our reasonable control;</li>
-          <li>failure to cancel before the next auto-renewal date.</li>
+          <li>requests that cannot be verified with transaction records.</li>
         </ul>
       </LegalSection>
 
       <LegalSection title="6. Requesting a Refund">
         <p>
           To request a refund, contact us through the Contact Us page with your registered email
-          address, transaction reference, billing date, and a short explanation of the issue.
+          address, transaction reference if available, payment date, and a short explanation of the
+          issue.
         </p>
         <p>
           We aim to review valid requests within a reasonable period, although timelines may vary

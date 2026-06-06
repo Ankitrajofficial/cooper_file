@@ -7,11 +7,14 @@ type RouteContext = {
   }>;
 };
 
-export async function POST(_: Request, context: RouteContext) {
+export async function POST(request: Request, context: RouteContext) {
   const { slug } = await context.params;
 
-  await incrementClientClickBySlug(slug);
+  const tracked = await incrementClientClickBySlug(slug, request);
+
+  if (!tracked) {
+    return NextResponse.json({ error: "Review link not found." }, { status: 404 });
+  }
 
   return NextResponse.json({ success: true });
 }
-

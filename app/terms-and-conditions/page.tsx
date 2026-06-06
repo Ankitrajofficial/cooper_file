@@ -6,14 +6,14 @@ import { formatDate } from "@/lib/utils";
 export const metadata: Metadata = {
   title: `Terms and Conditions | ${legalConfig.brandName}`,
   description:
-    `Read the terms and conditions governing use of ${legalConfig.brandName} and its subscription services.`,
+    `Read the terms and conditions governing use of ${legalConfig.brandName}.`,
 };
 
 export default function TermsAndConditionsPage() {
   return (
     <LegalPageShell
       title="Terms and Conditions"
-      description={`These terms govern your access to ${legalConfig.brandName}, including account usage, subscription billing, and acceptable use of the platform.`}
+      description={`These terms govern your access to ${legalConfig.brandName}, including account usage, acceptable use, review-link workflows, and free-tier limits.`}
     >
       <LegalSection title="1. Acceptance of Terms">
         <p>
@@ -38,7 +38,7 @@ export default function TermsAndConditionsPage() {
 
       <LegalSection title="3. Eligibility and Accounts">
         <p>
-          You agree to provide accurate registration and billing information and to keep your login
+          You agree to provide accurate registration information and to keep your login
           credentials secure.
         </p>
         <p>
@@ -57,18 +57,18 @@ export default function TermsAndConditionsPage() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="5. Billing, Subscriptions, and Auto-Renewal">
+      <LegalSection title="5. Free Access and Usage Limits">
         <p>
-          Paid plans are billed in advance on a recurring monthly or yearly basis, depending on the
-          plan you select.
+          {legalConfig.brandName} is currently offered with free access limits, including 2 review
+          links per month and 100 review scripts per link unless stated otherwise in the product.
         </p>
         <p>
-          By starting a paid subscription, you authorize recurring charges through our payment
-          partner until you cancel before the next renewal date.
+          We may revise free usage limits, add paid plans later, or change feature availability
+          with notice where required by law.
         </p>
         <p>
-          Subscription status, renewal timing, and payment handling may depend on third-party
-          payment infrastructure and successful authorization.
+          Paid subscription billing is currently disabled. If paid plans are introduced later,
+          additional payment terms may apply before any charge is collected.
         </p>
       </LegalSection>
 
@@ -120,8 +120,8 @@ export default function TermsAndConditionsPage() {
           or other users.
         </p>
         <p>
-          You may stop using the service at any time. Cancellation of a subscription will generally
-          apply from the next billing cycle unless otherwise required by law.
+          You may stop using the service at any time. Account closure or data requests can be made
+          through the Contact Us page.
         </p>
       </LegalSection>
 

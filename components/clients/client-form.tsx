@@ -99,7 +99,7 @@ export function ClientForm({
             : "Update this review link"}
         </h2>
         <p className="mt-1.5 text-sm text-[var(--on-surface-variant)]">
-          Fill in the details below. The AI will generate tailored review scripts based on the business information you provide.
+          Fill in the details below. Each link includes 100 ready review scripts based on the business information you provide.
         </p>
       </div>
 
@@ -159,8 +159,8 @@ export function ClientForm({
           max={toDateInputValue(maxExpiryDate)}
           helperText={
             maxExpiryDate
-              ? `Leave blank to match subscription expiry. Max: ${toDateInputValue(maxExpiryDate)}`
-              : "Leave blank to follow your current subscription period."
+              ? `Leave blank for no automatic expiry. Max: ${toDateInputValue(maxExpiryDate)}`
+              : "Leave blank for no automatic expiry."
           }
         />
         <div className="md:col-span-2">

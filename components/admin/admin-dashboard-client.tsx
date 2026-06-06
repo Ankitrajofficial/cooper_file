@@ -2,14 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { BILLING_PLANS, formatInr } from "@/lib/billing";
-import { BUSINESS_SECTORS, type BillingInterval, type SubscriptionTier } from "@/types";
-import { cn, formatDate, toErrorMessage } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { BUSINESS_SECTORS, type BillingInterval, type BusinessSector, type SubscriptionTier } from "@/types";
+import { cn, copyTextToClipboard, formatDate, toErrorMessage } from "@/lib/utils";
 
 type AdminDashboardClientProps = {
   overview: {
@@ -39,11 +34,18 @@ type AdminDashboardClientProps = {
       slug: string;
       businessName: string;
       city: string;
+      sector: BusinessSector;
+      industry: string;
+      businessDescription: string;
+      expiresAt: string | null;
+      expiryMode: "subscription" | "custom";
       ownerId: string;
       ownerEmail: string;
       ownerName: string;
       ownerPlan: SubscriptionTier;
+      ownerPlanName: string;
       ownerSubscriptionStatus: string;
+      ownerSubscriptionInterval: BillingInterval;
       reviewCount: number;
       clickCount: number;
       createdAt: string;
@@ -73,10 +75,6 @@ const defaultDraft: ClientDraft = {
   googleReviewLink: "",
 };
 
-const planNameByTier = Object.fromEntries(
-  BILLING_PLANS.map((plan) => [plan.tier, plan.name]),
-) as Record<Exclude<SubscriptionTier, "none">, string>;
-
 /* ─── Stat icon SVGs ─── */
 
 function UsersIcon() {
@@ -91,14 +89,6 @@ function LinksIcon() {
   return (
     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.193-5.193a4.5 4.5 0 00-1.242-7.244l4.5-4.5a4.5 4.5 0 016.364 6.364l-1.757 1.757" />
-    </svg>
-  );
-}
-
-function SubsIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 }
@@ -119,44 +109,19 @@ function ClicksIcon() {
   );
 }
 
-function RevenueIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-    </svg>
-  );
-}
-
 export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
   const router = useRouter();
+  const [users, setUsers] = useState(overview.users);
   const [feedback, setFeedback] = useState("");
+  const [formFeedback, setFormFeedback] = useState("");
+  const [createdClientLink, setCreatedClientLink] = useState("");
+  const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
-  const [planSelections, setPlanSelections] = useState(() =>
-    Object.fromEntries(
-      overview.users.map((user) => [
-        user.id,
-        {
-          tier: user.subscriptionTier === "none" ? "tier_1" : user.subscriptionTier,
-          interval: user.subscriptionInterval,
-        },
-      ]),
-    ) as Record<string, { tier: Exclude<SubscriptionTier, "none">; interval: BillingInterval }>,
-  );
   const [draft, setDraft] = useState<ClientDraft>(defaultDraft);
 
-  function setPlanSelection(
-    userId: string,
-    key: "tier" | "interval",
-    value: Exclude<SubscriptionTier, "none"> | BillingInterval,
-  ) {
-    setPlanSelections((current) => ({
-      ...current,
-      [userId]: {
-        ...current[userId],
-        [key]: value,
-      },
-    }));
-  }
+  useEffect(() => {
+    setUsers(overview.users);
+  }, [overview.users]);
 
   function updateDraft<K extends keyof ClientDraft>(key: K, value: ClientDraft[K]) {
     setDraft((current) => ({
@@ -179,58 +144,50 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
     }
   }
 
-  function handleGrantPlan(userId: string) {
-    const selection = planSelections[userId];
+  function handleDeleteUser(userId: string, label: string) {
+    if (
+      !window.confirm(
+        `Delete ${label} and all review links/reviews owned by this user?`,
+      )
+    ) {
+      return;
+    }
 
     void runAction(async () => {
-      const response = await fetch("/api/admin/subscriptions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          tier: selection.tier,
-          interval: selection.interval,
-        }),
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
       });
-      const payload = (await response.json()) as { error?: string };
+      const payload = (await response.json()) as {
+        error?: string;
+        deletedClients?: number;
+      };
 
       if (!response.ok) {
-        throw new Error(payload.error || "Could not update subscription.");
+        throw new Error(payload.error || "Could not delete user.");
       }
 
-      setFeedback("Client plan updated.");
-    });
-  }
-
-  function handleClearPlan(userId: string) {
-    void runAction(async () => {
-      const response = await fetch("/api/admin/subscriptions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          tier: "none",
-          interval: "monthly",
-        }),
-      });
-      const payload = (await response.json()) as { error?: string };
-
-      if (!response.ok) {
-        throw new Error(payload.error || "Could not clear subscription.");
-      }
-
-      setFeedback("Client plan removed.");
+      setUsers((current) => current.filter((user) => user.id !== userId));
+      setFeedback(
+        `User deleted. Removed ${payload.deletedClients || 0} owned link${
+          payload.deletedClients === 1 ? "" : "s"
+        }.`,
+      );
     });
   }
 
   function handleCreateClient(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setFormFeedback("");
+    setCreatedClientLink("");
 
-    void runAction(async () => {
+    if (!draft.ownerEmail.trim()) {
+      setFormFeedback("Enter the client owner email. If the account does not exist, it will be created automatically.");
+      return;
+    }
+
+    setIsPending(true);
+
+    (async () => {
       const response = await fetch("/api/admin/clients", {
         method: "POST",
         headers: {
@@ -238,15 +195,37 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
         },
         body: JSON.stringify(draft),
       });
-      const payload = (await response.json()) as { error?: string };
+      const payload = (await response.json()) as {
+        error?: string;
+        client?: {
+          publicReviewUrl?: string;
+        };
+      };
 
       if (!response.ok) {
         throw new Error(payload.error || "Could not create client.");
       }
 
       setDraft(defaultDraft);
-      setFeedback("Client created manually.");
-    });
+      setCreatedClientLink(payload.client?.publicReviewUrl || "");
+      setFormFeedback(
+        "Client link created. New owner accounts can sign up or log in with this email.",
+      );
+      router.refresh();
+    })()
+      .catch((error) => {
+        setFormFeedback(toErrorMessage(error));
+      })
+      .finally(() => {
+        setIsPending(false);
+      });
+  }
+
+  async function handleCopyClientLink(slug: string) {
+    const publicReviewUrl = `${window.location.origin}/review/${slug}`;
+    const copied = await copyTextToClipboard(publicReviewUrl);
+
+    setFeedback(copied ? "Client review link copied." : "Could not copy the client review link.");
   }
 
   function handleDeleteClient(clientId: string, businessName: string) {
@@ -271,10 +250,8 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
   const statCards = [
     { label: "Client Users", value: overview.stats.totalUsers, icon: <UsersIcon />, color: "text-[#6bd8cb]", glow: "shadow-[0_0_20px_-5px_rgba(107,216,203,0.2)]" },
     { label: "Managed Links", value: overview.stats.totalClients, icon: <LinksIcon />, color: "text-cyan-400", glow: "shadow-[0_0_20px_-5px_rgba(34,211,238,0.2)]" },
-    { label: "Active Subscribers", value: overview.stats.activeSubscribers, icon: <SubsIcon />, color: "text-emerald-400", glow: "shadow-[0_0_20px_-5px_rgba(52,211,153,0.2)]" },
-    { label: "Total Reviews", value: overview.stats.totalReviews, icon: <ReviewsIcon />, color: "text-violet-400", glow: "shadow-[0_0_20px_-5px_rgba(167,139,250,0.2)]" },
+    { label: "Saved Scripts", value: overview.stats.totalReviews, icon: <ReviewsIcon />, color: "text-violet-400", glow: "shadow-[0_0_20px_-5px_rgba(167,139,250,0.2)]" },
     { label: "Review Clicks", value: overview.stats.totalClicks, icon: <ClicksIcon />, color: "text-amber-400", glow: "shadow-[0_0_20px_-5px_rgba(251,191,36,0.2)]" },
-    { label: "Estimated MRR", value: formatInr(overview.stats.estimatedMrrInr), icon: <RevenueIcon />, color: "text-rose-400", glow: "shadow-[0_0_20px_-5px_rgba(251,113,133,0.2)]" },
   ];
 
   return (
@@ -293,8 +270,8 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
               Platform Control Center
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-400">
-              Grant plans, manually add or remove client links,
-              monitor review clicks, and track portfolio revenue — all from one panel.
+              Manually add or remove client links, monitor review clicks, and
+              track portfolio activity from one panel.
             </p>
           </div>
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-slate-400 backdrop-blur-sm">
@@ -314,7 +291,7 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
       ) : null}
 
       {/* ─── Stats grid ─── */}
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map((stat) => (
           <div
             key={stat.label}
@@ -338,24 +315,21 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
         ))}
       </section>
 
-      {/* ─── Client Plans + Manual Add ─── */}
+      {/* ─── Client Users + Manual Add ─── */}
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        {/* Client Plans */}
+        {/* Client Users */}
         <div className="rounded-2xl border border-white/[0.06] bg-[#151b2d]/80 p-6 backdrop-blur-sm">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#6bd8cb]">
-                Client Plans
+                Client Users
               </p>
-              <h2 className="mt-2 text-xl font-bold text-white">Grant or remove access</h2>
-            </div>
-            <div className="rounded-full border border-[#6bd8cb]/20 bg-[#6bd8cb]/[0.08] px-3.5 py-1.5 text-xs font-semibold text-[#6bd8cb]">
-              Active ARR {formatInr(overview.stats.activeArrInr)}
+              <h2 className="mt-2 text-xl font-bold text-white">Monitor client activity</h2>
             </div>
           </div>
 
           <div className="mt-5 space-y-3">
-            {overview.users
+            {users
               .filter((user) => user.role === "client")
               .map((user) => (
                 <div
@@ -374,19 +348,6 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
                         </div>
                       </div>
                       <div className="mt-2.5 flex flex-wrap gap-1.5">
-                        <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-slate-300">
-                          {user.subscriptionTier === "none"
-                            ? "No plan"
-                            : planNameByTier[user.subscriptionTier]}
-                        </span>
-                        <span className={cn(
-                          "rounded-md px-2 py-0.5 text-[10px] font-semibold",
-                          user.subscriptionStatus === "active"
-                            ? "bg-emerald-500/10 text-emerald-400"
-                            : "bg-slate-500/10 text-slate-400",
-                        )}>
-                          {user.subscriptionStatus}
-                        </span>
                         <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
                           {user.activeClientCount} links
                         </span>
@@ -396,42 +357,15 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={planSelections[user.id]?.tier || "tier_1"}
-                        onChange={(event) =>
-                          setPlanSelection(user.id, "tier", event.target.value as Exclude<SubscriptionTier, "none">)
-                        }
-                        className="rounded-lg border border-white/[0.08] bg-[#0c1324] px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
-                      >
-                        <option value="tier_1">Starter</option>
-                        <option value="tier_2">Growth</option>
-                        <option value="tier_3">Scale</option>
-                      </select>
-                      <select
-                        value={planSelections[user.id]?.interval || "monthly"}
-                        onChange={(event) =>
-                          setPlanSelection(user.id, "interval", event.target.value as BillingInterval)
-                        }
-                        className="rounded-lg border border-white/[0.08] bg-[#0c1324] px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition focus:border-[#6bd8cb]/40 focus:shadow-[0_0_0_3px_rgba(107,216,203,0.1)]"
-                      >
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                      </select>
                       <button
                         type="button"
-                        onClick={() => handleGrantPlan(user.id)}
+                        onClick={() =>
+                          handleDeleteUser(user.id, user.name || user.email)
+                        }
                         disabled={isPending}
-                        className="rounded-lg bg-gradient-to-b from-[#6bd8cb] to-[#29a195] px-3.5 py-1.5 text-xs font-semibold text-[#00302b] shadow-[0_0_12px_-3px_rgba(107,216,203,0.4)] transition-all hover:shadow-[0_0_20px_-3px_rgba(107,216,203,0.5)] disabled:opacity-50"
+                        className="rounded-lg border border-rose-500/20 px-3.5 py-1.5 text-xs font-semibold text-rose-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/[0.08] disabled:opacity-50"
                       >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleClearPlan(user.id)}
-                        disabled={isPending}
-                        className="rounded-lg border border-white/[0.08] px-3.5 py-1.5 text-xs font-semibold text-slate-400 transition-all hover:border-rose-500/30 hover:bg-rose-500/[0.06] hover:text-rose-400 disabled:opacity-50"
-                      >
-                        Remove
+                        Delete user
                       </button>
                     </div>
                   </div>
@@ -561,6 +495,41 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
               Reset
             </button>
           </div>
+          {formFeedback ? (
+            <div className="mt-4 rounded-xl border border-[#6bd8cb]/20 bg-[#6bd8cb]/[0.06] px-4 py-3 text-sm text-slate-200">
+              {formFeedback}
+              {createdClientLink ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-[#0c1324] p-2">
+                  <code className="min-w-0 flex-1 truncate text-xs text-[#6bd8cb]">
+                    {createdClientLink}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void copyTextToClipboard(createdClientLink).then((copied) => {
+                        setFormFeedback(
+                          copied
+                            ? "Client link copied. New owner accounts can sign up or log in with this email."
+                            : "Client link created, but copy was blocked by the browser.",
+                        );
+                      });
+                    }}
+                    className="rounded-lg border border-white/[0.08] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:text-white"
+                  >
+                    Copy link
+                  </button>
+                  <a
+                    href={createdClientLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg border border-white/[0.08] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:text-white"
+                  >
+                    Open
+                  </a>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </form>
       </section>
 
@@ -578,70 +547,149 @@ export function AdminDashboardClient({ overview }: AdminDashboardClientProps) {
           </p>
         </div>
 
-        <div className="mt-5 overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-3">Client</th>
-                <th className="px-4 py-3">Owner</th>
-                <th className="px-4 py-3">Plan</th>
-                <th className="px-4 py-3">Reviews</th>
-                <th className="px-4 py-3">Clicks</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {overview.clients.map((client) => (
-                <tr
+        <div className="mt-5 space-y-4">
+          {overview.clients.length ? (
+            overview.clients.map((client) => {
+              const publicReviewUrl =
+                typeof window === "undefined"
+                  ? `/review/${client.slug}`
+                  : `${window.location.origin}/review/${client.slug}`;
+
+              return (
+                <article
                   key={client.id}
-                  className="border-t border-white/[0.04] transition-colors hover:bg-white/[0.02]"
+                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] transition hover:border-white/[0.1] hover:bg-white/[0.035]"
                 >
-                  <td className="px-4 py-3.5">
-                    <p className="font-semibold text-white">{client.businessName}</p>
-                    <p className="text-xs text-slate-500">{client.city}</p>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <p className="text-slate-300">{client.ownerName || client.ownerEmail}</p>
-                    <p className="text-xs text-slate-500">{client.ownerEmail}</p>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span className={cn(
-                      "rounded-md px-2 py-0.5 text-[10px] font-semibold",
-                      client.ownerPlan === "none"
-                        ? "bg-slate-500/10 text-slate-400"
-                        : "bg-[#6bd8cb]/10 text-[#6bd8cb]",
-                    )}>
-                      {client.ownerPlan}
-                    </span>
-                    <p className="mt-0.5 text-[10px] text-slate-500">{client.ownerSubscriptionStatus}</p>
-                  </td>
-                  <td className="px-4 py-3.5 font-semibold text-violet-400">{client.reviewCount}</td>
-                  <td className="px-4 py-3.5 font-semibold text-cyan-400">{client.clickCount}</td>
-                  <td className="px-4 py-3.5 text-slate-400">{formatDate(client.createdAt)}</td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex flex-wrap gap-1.5">
-                      <Link
-                        href={`/review/${client.slug}`}
-                        target="_blank"
-                        className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:text-white"
-                      >
-                        Open
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteClient(client.id, client.businessName)}
-                        className="rounded-lg border border-white/[0.04] px-3 py-1 text-xs font-semibold text-rose-400/70 transition hover:border-rose-500/30 hover:bg-rose-500/[0.06] hover:text-rose-400"
-                        disabled={isPending}
-                      >
-                        Delete
-                      </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedClientId((current) =>
+                        current === client.id ? null : client.id,
+                      )
+                    }
+                    className="grid w-full gap-3 p-4 text-left md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_120px_120px_32px] md:items-center"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-base font-bold text-white">
+                          {client.businessName}
+                        </h3>
+                        <span className="rounded-md bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-400">
+                          {client.sector}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 truncate text-xs text-slate-500">
+                        {client.city} · {client.industry}
+                      </p>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-300">
+                        {client.ownerName || client.ownerEmail}
+                      </p>
+                      <p className="truncate text-xs text-slate-500">
+                        {client.ownerEmail}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-3 text-sm font-semibold">
+                      <span className="text-violet-400">{client.reviewCount} scripts</span>
+                      <span className="text-cyan-400">{client.clickCount} clicks</span>
+                    </div>
+
+                    <svg
+                      className={cn(
+                        "h-4 w-4 text-slate-500 transition-transform",
+                        expandedClientId === client.id && "rotate-180",
+                      )}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </button>
+
+                  {expandedClientId === client.id ? (
+                    <div className="border-t border-white/[0.05] p-4">
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <div className="rounded-xl bg-[#0c1324] p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Business</p>
+                          <p className="mt-1 text-sm font-semibold text-slate-200">{client.businessName}</p>
+                          <p className="text-xs text-slate-500">{client.city}</p>
+                          {client.businessDescription ? (
+                            <p className="mt-2 line-clamp-3 text-xs leading-5 text-slate-400">
+                              {client.businessDescription}
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="rounded-xl bg-[#0c1324] p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Owner</p>
+                          <p className="mt-1 truncate text-sm font-semibold text-slate-200">
+                            {client.ownerName || client.ownerEmail}
+                          </p>
+                          <p className="truncate text-xs text-slate-500">{client.ownerEmail}</p>
+                        </div>
+                        <div className="rounded-xl bg-[#0c1324] p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Activity</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {client.reviewCount} saved scripts · {client.clickCount} customer clicks
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-[#0c1324] p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Dates</p>
+                          <p className="mt-1 text-xs text-slate-300">Created {formatDate(client.createdAt)}</p>
+                          <p className="text-xs text-slate-500">
+                            Expires {client.expiresAt ? `${formatDate(client.expiresAt)} (${client.expiryMode})` : "no automatic expiry"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-[#0c1324] p-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                            Client review link
+                          </p>
+                          <code className="mt-1 block truncate text-xs text-[#6bd8cb]">
+                            {publicReviewUrl}
+                          </code>
+                        </div>
+                        <Link
+                          href={`/review/${client.slug}`}
+                          target="_blank"
+                          className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:text-white"
+                        >
+                          Open link
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleCopyClientLink(client.slug);
+                          }}
+                          className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:text-white"
+                        >
+                          Copy link
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteClient(client.id, client.businessName)}
+                          className="rounded-lg border border-white/[0.04] px-3 py-1.5 text-xs font-semibold text-rose-400/70 transition hover:border-rose-500/30 hover:bg-rose-500/[0.06] hover:text-rose-400"
+                          disabled={isPending}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })
+          ) : (
+            <div className="rounded-xl border border-white/[0.04] bg-white/[0.02] p-6 text-sm text-slate-500">
+              No client links yet.
+            </div>
+          )}
         </div>
       </section>
     </div>

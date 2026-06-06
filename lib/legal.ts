@@ -1,8 +1,10 @@
 export const legalConfig = {
-  brandName: "Review Engine",
+  brandName: "Cooperfile",
+  parentCompany: "AR Group",
+  productAttribution: "Cooperfile is a product of AR Group.",
   legalEntity: "Ankit Raj",
-  websiteUrl: "Website URL will be updated soon",
-  supportEmail: "Email will be updated soon",
+  websiteUrl: "https://cooperfile.com",
+  supportEmail: "support@cooperfile.com",
   supportPhone: "+91-6283464174",
   businessAddress: "MSME Registered Business, India",
   grievanceContact: "Ankit Raj · +91-6283464174",

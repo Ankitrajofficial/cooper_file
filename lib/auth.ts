@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtVerify, SignJWT } from "jose";
 import { getRoleHomePath } from "@/lib/auth-redirect";
+import { ensureUserForSupabaseUser } from "@/lib/services/user-service";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { type UserRole } from "@/types";
 
 const AUTH_COOKIE = "review_funnel_session";
@@ -67,6 +70,28 @@ export async function clearAuthCookie() {
 }
 
 export async function getSession() {
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createSupabaseServerClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user?.email) {
+        const { user: appUser } = await ensureUserForSupabaseUser(user);
+        const role = resolveUserRole(appUser);
+
+        return {
+          userId: appUser._id.toString(),
+          email: appUser.email,
+          role,
+        } satisfies SessionUser;
+      }
+    } catch {
+      // Fall back to the legacy JWT session when Supabase is not available.
+    }
+  }
+
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE)?.value;
 
@@ -130,7 +155,7 @@ export async function requireAdminUser() {
   const session = await getSession();
 
   if (!session?.userId) {
-    redirect("/admin/login");
+    redirect("/login");
   }
 
   if (session.role !== "admin") {
