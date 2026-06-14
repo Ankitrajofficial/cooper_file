@@ -19,17 +19,18 @@ const userSchema = new Schema(
       type: String,
       default: null,
     },
+    // No `default: null` here: a sparse unique index skips documents that are
+    // missing the field, but an explicit `null` value IS indexed — so a default
+    // of null makes every non-OAuth user collide on `{ googleId: null }`.
     googleId: {
       type: String,
       unique: true,
       sparse: true,
-      default: null,
     },
     supabaseUserId: {
       type: String,
       unique: true,
       sparse: true,
-      default: null,
       trim: true,
     },
     name: {

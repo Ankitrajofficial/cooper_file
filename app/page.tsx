@@ -284,18 +284,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
               {/* CTAs */}
               <div className="animate-fade-up-delay-3 flex flex-wrap gap-3">
-                <Link href="/signup">
-                  <Button size="lg">Start Getting Reviews Free</Button>
-                </Link>
-                <a href="#how-it-works">
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] hover:text-white"
-                  >
-                    See How It Works
-                  </Button>
-                </a>
+                <Button href="/signup" size="lg">
+                  Start Getting Reviews Free
+                </Button>
+                <Button
+                  href="#how-it-works"
+                  variant="ghost"
+                  size="lg"
+                  className="border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                >
+                  See How It Works
+                </Button>
               </div>
 
               {/* Micro trust signals */}
@@ -838,18 +837,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3 lg:justify-end">
-                  <Link href="/signup">
-                    <Button size="lg">Start Getting Reviews Free</Button>
-                  </Link>
-                  <a href="#how-it-works">
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      className="border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] hover:text-white"
-                    >
-                      See How It Works
-                    </Button>
-                  </a>
+                  <Button href="/signup" size="lg">
+                    Start Getting Reviews Free
+                  </Button>
+                  <Button
+                    href="#how-it-works"
+                    variant="ghost"
+                    size="lg"
+                    className="border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                  >
+                    See How It Works
+                  </Button>
                 </div>
               </div>
             </div>

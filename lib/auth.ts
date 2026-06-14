@@ -69,26 +69,53 @@ export async function clearAuthCookie() {
   });
 }
 
+// Cap how long the Supabase auth lookup may block a render. When the Supabase
+// host is unreachable, supabase-js otherwise retries for ~25s, hanging every
+// page and leaking the error to the dev overlay. On timeout we abort and fall
+// back to the legacy JWT session.
+const SUPABASE_AUTH_TIMEOUT_MS = 2500;
+
+async function getSupabaseSessionUser(): Promise<SessionUser | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SUPABASE_AUTH_TIMEOUT_MS);
+
+  try {
+    const supabase = await createSupabaseServerClient(controller.signal);
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<null>((resolve) => {
+        controller.signal.addEventListener("abort", () => resolve(null), {
+          once: true,
+        });
+      }),
+    ]);
+
+    const user = result?.data?.user;
+    if (!user?.email) {
+      return null;
+    }
+
+    const { user: appUser } = await ensureUserForSupabaseUser(user);
+
+    return {
+      userId: appUser._id.toString(),
+      email: appUser.email,
+      role: resolveUserRole(appUser),
+    } satisfies SessionUser;
+  } catch {
+    // Fall back to the legacy JWT session when Supabase is not available.
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function getSession() {
   if (isSupabaseConfigured()) {
-    try {
-      const supabase = await createSupabaseServerClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const supabaseUser = await getSupabaseSessionUser();
 
-      if (user?.email) {
-        const { user: appUser } = await ensureUserForSupabaseUser(user);
-        const role = resolveUserRole(appUser);
-
-        return {
-          userId: appUser._id.toString(),
-          email: appUser.email,
-          role,
-        } satisfies SessionUser;
-      }
-    } catch {
-      // Fall back to the legacy JWT session when Supabase is not available.
+    if (supabaseUser) {
+      return supabaseUser;
     }
   }
 

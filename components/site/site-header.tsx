@@ -1,7 +1,5 @@
 "use client";
 
-import type { Route } from "next";
-import Link from "next/link";
 import { useState } from "react";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
@@ -24,7 +22,6 @@ export function SiteHeader({
   primaryActionHref = "/signup",
 }: SiteHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const primaryActionIsAnchor = primaryActionHref.startsWith("#");
 
   const navLinks = [
     { href: "#features", label: "Features" },
@@ -55,32 +52,25 @@ export function SiteHeader({
 
             <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
               {authenticated ? (
-                <Link href="/dashboard">
-                  <Button size="sm">Dashboard</Button>
-                </Link>
+                <Button href="/dashboard" size="sm">
+                  Dashboard
+                </Button>
               ) : (
                 <>
                   {showLoginButton ? (
-                    <Link href="/login">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-slate-300 hover:bg-white/[0.06] hover:text-white"
-                      >
-                        Login
-                      </Button>
-                    </Link>
+                    <Button
+                      href="/login"
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                    >
+                      Login
+                    </Button>
                   ) : null}
                   {showGetStartedButton ? (
-                    primaryActionIsAnchor ? (
-                      <a href={primaryActionHref}>
-                        <Button size="sm">{primaryActionLabel}</Button>
-                      </a>
-                    ) : (
-                      <Link href={primaryActionHref as Route}>
-                        <Button size="sm">{primaryActionLabel}</Button>
-                      </Link>
-                    )
+                    <Button href={primaryActionHref} size="sm">
+                      {primaryActionLabel}
+                    </Button>
                   ) : null}
                 </>
               )}
