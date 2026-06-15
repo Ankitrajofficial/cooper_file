@@ -86,7 +86,28 @@ Primary auth code lives in:
 - `lib/auth-redirect.ts`
 - `middleware.ts`
 - `app/api/auth/**`
-- `lib/google-auth.ts`
+- `lib/google-auth.ts` (legacy custom Google OAuth)
+- `lib/supabase/**` and `app/api/auth/supabase/callback` (Supabase auth)
+
+### Auth provider modes
+
+Auth runs in one of two modes, selected **at runtime** by `isSupabaseConfigured()` in `lib/supabase/config.ts`:
+
+- **Supabase mode** — active when `NEXT_PUBLIC_SUPABASE_URL` and one of `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set. Email/password and Google sign-in are delegated to Supabase Auth.
+- **Legacy mode** — active when those env vars are absent. Email/password is handled directly against MongoDB with bcrypt, and Google sign-in uses the custom OAuth flow in `lib/google-auth.ts`.
+
+Both `/api/auth/signup`, `/api/auth/login`, and `/api/auth/google` branch on `isSupabaseConfigured()` and take the matching path. This means **production behavior depends on which env vars are deployed**, not on a code flag.
+
+Regardless of mode, the app always issues its **own** `review_funnel_session` JWT cookie as the source of truth for route protection. Supabase sessions are exchanged for this cookie at the callback; `middleware.ts` only reads the JWT cookie and never calls Supabase.
+
+### Supabase auth flow
+
+When Supabase mode is active:
+
+1. Supabase user identities are mapped to local Mongo `User` documents by `ensureUserForSupabaseUser` in `lib/services/user-service.ts` (matched on `supabaseUserId` or `email`, creating a free-tier client user on first sign-in).
+2. **Email/password**: `signup` calls `supabase.auth.signUp` (with `emailRedirectTo` pointing at the callback) and `login` calls `supabase.auth.signInWithPassword`. On a returned session the app sets its JWT cookie; unconfirmed signups are sent to `/login` with a "check your email" message.
+3. **Google OAuth**: `/api/auth/google` calls `supabase.auth.signInWithOAuth({ provider: "google", redirectTo: "<appUrl>/api/auth/supabase/callback" })`. Supabase then sends the user to Google with redirect_uri `https://<project-ref>.supabase.co/auth/v1/callback` — **this Supabase callback (not the app domain) is what must be whitelisted in the Google OAuth client**, and the Google provider must be enabled in the Supabase dashboard.
+4. **Callback** (`app/api/auth/supabase/callback`): exchanges the code for a Supabase session, loads the user, runs `ensureUserForSupabaseUser`, sets the `review_funnel_session` cookie, optionally sends a welcome email, then redirects to a role-safe path.
 
 ### Session model
 
@@ -125,11 +146,12 @@ This means `ADMIN_EMAILS` is security-sensitive and effectively acts as a role o
 
 | Route | Method | Purpose |
 | --- | --- | --- |
-| `/api/auth/signup` | `POST` | email/password signup, creates client user, sets auth cookie, redirects to billing |
-| `/api/auth/login` | `POST` | email/password login, sets auth cookie, returns role-aware redirect |
-| `/api/auth/logout` | `POST` | clears auth cookie |
-| `/api/auth/google` | `GET` | starts Google OAuth |
-| `/api/auth/google/callback` | `GET` | exchanges code, verifies Google ID token, upserts user, sets auth cookie |
+| `/api/auth/signup` | `POST` | email/password signup (Supabase or Mongo+bcrypt), creates client user, sets auth cookie |
+| `/api/auth/login` | `POST` | email/password login (Supabase or Mongo+bcrypt), sets auth cookie, returns role-aware redirect |
+| `/api/auth/logout` | `POST` | clears auth cookie (also signs out Supabase when configured) |
+| `/api/auth/google` | `GET` | starts Google OAuth — via Supabase when configured, else the custom `lib/google-auth.ts` flow |
+| `/api/auth/google/callback` | `GET` | legacy custom flow: exchanges code, verifies Google ID token, upserts user, sets auth cookie |
+| `/api/auth/supabase/callback` | `GET` | Supabase flow: exchanges code for session, maps to local user, sets auth cookie |
 
 ### Important auth invariants
 
@@ -146,7 +168,7 @@ Defined in `models/User.ts`.
 
 Key fields:
 
-- identity: `email`, `password`, `googleId`, `name`, `image`, `phone`
+- identity: `email`, `password`, `googleId`, `supabaseUserId`, `name`, `image`, `phone`
 - role: `role`
 - billing state: `subscriptionTier`, `subscriptionInterval`, `subscriptionStatus`, `subscriptionAutoRenew`
 - billing period: `subscriptionCurrentPeriodStart`, `subscriptionCurrentPeriodEnd`
@@ -531,6 +553,9 @@ Current expected env vars from `.env.example`:
 | `NEXT_PUBLIC_APP_URL` | public app base URL, also used in payment return handling |
 | `GOOGLE_CLIENT_ID` | Google OAuth |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL; presence switches auth into Supabase mode |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase public auth key (either works) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
 | `ADMIN_EMAILS` | comma-separated admin override emails |
 | `CASHFREE_ENVIRONMENT` | `sandbox` or `production` |
 | `CASHFREE_APP_ID` | Cashfree API client id |
@@ -550,6 +575,8 @@ Keep these in mind before changing anything:
 - Cashfree webhook handling is the long-term truth source; the return page is only a user-facing confirmation bridge.
 - Webhook handlers must stay idempotent.
 - `review_funnel_session` auth cookie and API auth responses are designed around no-store behavior to avoid stale login/logout UI.
+- Auth provider is chosen at runtime by whether Supabase env vars are present, so the same code behaves differently per deployment; the app always issues its own `review_funnel_session` JWT regardless of provider.
+- For Supabase Google sign-in, Google must whitelist the Supabase callback `https://<project-ref>.supabase.co/auth/v1/callback` (not the app domain), and the Google provider must be enabled in the Supabase dashboard.
 - Phone validation for billing currently expects exactly 10 digits.
 - AI regeneration replaces all existing review rows for that client.
 
