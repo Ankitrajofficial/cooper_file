@@ -227,18 +227,46 @@ export function buildScriptedReviews(
   });
 }
 
-const RATING_REVIEW_TEMPLATES: Record<number, string[]> = {
+// Doctor clinic ratings stay positive across 1-5 and never criticise the doctor.
+// At 3 stars, any soft improvement note is pointed at the front desk / wait time
+// (the staff and surrounding experience) so the doctor's reputation is protected.
+const DOCTOR_RATING_REVIEW_TEMPLATES: Record<number, string[]> = {
   1: [
-    "My experience with {businessName} in {city} was disappointing overall. There were a few basic positives, but the service and overall experience did not meet what I expected from this {industry}.",
-    "I had a poor experience with {businessName}. I hope the team can improve consistency, communication, and customer support for people visiting this {industry} in {city}.",
+    "I had a genuinely reassuring experience at {businessName} in {city}. The doctor was attentive, patient, and professional, and the care felt thorough. A trusted clinic for anyone in {city}.",
+    "The doctor at {businessName} was caring and knowledgeable, and took the time to explain everything clearly. I left feeling well looked after and would happily recommend this clinic in {city}.",
   ],
   2: [
-    "My experience with {businessName} in {city} could have been better. Some parts were fine, but the overall service felt inconsistent and left room for improvement.",
-    "{businessName} has potential, but my visit did not fully meet expectations. The team could improve the customer experience and make the service feel more reliable.",
+    "{businessName} gave me a comforting and professional experience. The doctor was thorough and explained the treatment clearly, which made the visit feel dependable and worthwhile.",
+    "I appreciated the care I received at {businessName}. The doctor was attentive and reassuring, and the consultation felt trustworthy. A solid choice for patients in {city}.",
   ],
   3: [
-    "My experience with {businessName} in {city} was okay overall. There were some helpful parts, but a few things could be improved to make this {industry} feel more consistent.",
-    "{businessName} delivered a fair experience. It worked for what I needed, though better service flow and attention to detail would make the visit stronger.",
+    "The doctor at {businessName} was excellent — attentive, professional, and clear about the treatment. The front desk and wait time could be a little smoother, but the medical care itself was reassuring and well worth it.",
+    "I had a good experience with the doctor at {businessName}; the consultation was thorough and caring. The only small thing was the scheduling and front-desk flow, but the doctor's care left a strong, positive impression.",
+  ],
+  4: [
+    "I had a great experience at {businessName} in {city}. The doctor was professional and attentive, the care felt thorough, and this clinic is well worth considering if you are nearby.",
+    "{businessName} gave me a very positive experience. The doctor was caring and clear, and while the front-desk flow could be slightly quicker, the treatment and support were strong.",
+  ],
+  5: [
+    "I had an excellent experience at {businessName} in {city}. The doctor was professional, caring, and thorough, and I would wholeheartedly recommend this clinic to others.",
+    "{businessName} really stood out for the doctor's attentive care and reassuring approach. It is a trusted choice in {city} for anyone looking for dependable treatment.",
+  ],
+};
+
+// Generic ratings keep 1-3 positive too, protecting the core service while
+// pointing any soft 3-star note at the front desk / wait rather than the work.
+const RATING_REVIEW_TEMPLATES: Record<number, string[]> = {
+  1: [
+    "I had a really positive experience with {businessName} in {city}. The service felt professional and the overall visit was smooth. Recommended for anyone looking for a reliable {industry} in {city}.",
+    "{businessName} gave me a genuinely good experience. The quality and support were dependable, and I would happily recommend this {industry} to others in {city}.",
+  ],
+  2: [
+    "{businessName} delivered a reassuring experience overall. The core service felt professional and the visit was comfortable. A solid {industry} option in {city}.",
+    "I appreciated the experience at {businessName}. The main service was dependable and worthwhile, making it a good {industry} choice in {city}.",
+  ],
+  3: [
+    "The main service at {businessName} was great and felt professional. A few small things at the front desk or with wait time could be smoother, but the overall experience was positive and worth it.",
+    "I had a good experience with {businessName} overall; the core service was reliable. The only minor thing was the front-desk flow and timing, but it did not take away from a positive visit.",
   ],
   4: [
     "I had a good experience with {businessName} in {city}. The team was helpful, the service felt smooth, and this {industry} is worth considering if you are nearby.",
@@ -253,8 +281,11 @@ const RATING_REVIEW_TEMPLATES: Record<number, string[]> = {
 export function buildRatingReviewOptions(
   context: ReviewTemplateContext & { rating: number },
 ) {
-  const templates =
-    RATING_REVIEW_TEMPLATES[context.rating] ?? RATING_REVIEW_TEMPLATES[5];
+  const templateMap =
+    context.sector === "Doctor Clinic"
+      ? DOCTOR_RATING_REVIEW_TEMPLATES
+      : RATING_REVIEW_TEMPLATES;
+  const templates = templateMap[context.rating] ?? templateMap[5];
 
   return templates.map((template) => fillTemplate(template, context));
 }
