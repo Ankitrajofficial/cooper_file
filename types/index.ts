@@ -9,6 +9,7 @@ export const BUSINESS_SECTORS = [
   "Salon Spa",
   "Retail Shop",
   "Real Estate",
+  "NGO",
   "General Business",
 ] as const;
 

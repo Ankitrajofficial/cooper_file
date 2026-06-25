@@ -28,6 +28,10 @@ const BUSINESS_KEYWORDS: Array<{
   { keyword: "store", sector: "Retail Shop", industry: "Retail Store" },
   { keyword: "realty", sector: "Real Estate", industry: "Real Estate" },
   { keyword: "property", sector: "Real Estate", industry: "Real Estate" },
+  { keyword: "ngo", sector: "NGO", industry: "NGO" },
+  { keyword: "foundation", sector: "NGO", industry: "Charitable Foundation" },
+  { keyword: "trust", sector: "NGO", industry: "Charitable Trust" },
+  { keyword: "charity", sector: "NGO", industry: "Charity" },
 ];
 
 type ClassValue = string | false | null | undefined;

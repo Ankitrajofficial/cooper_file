@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPublicClientBySlug } from "@/lib/services/client-service";
-import { buildRatingReviewOptions } from "@/lib/services/review-service";
+import { generateCustomerReviewOptions } from "@/lib/services/ai-service";
 
 type RouteContext = {
   params: Promise<{
@@ -39,7 +39,8 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    const reviews = buildRatingReviewOptions({
+    // AI-only (Groq): every click generates fresh, distinct review options.
+    const reviews = await generateCustomerReviewOptions({
       businessName: payload.client.businessName,
       city: payload.client.city,
       sector: payload.client.sector,

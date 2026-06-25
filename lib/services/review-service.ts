@@ -31,6 +31,7 @@ const SECTOR_CATEGORY_MAP: Record<BusinessSector, ReviewCategory[]> = {
   "Salon Spa": ["General", "Service Quality", "Staff & Support", "Cleanliness", "Comfort", "One-liner"],
   "Retail Shop": ["General", "Service Quality", "Staff & Support", "Value", "Ambience", "One-liner"],
   "Real Estate": ["General", "Service Quality", "Staff & Support", "Value", "Comfort", "One-liner"],
+  NGO: ["General", "Service Quality", "Staff & Support", "Safety", "Value", "One-liner"],
   "General Business": ["General", "Service Quality", "Staff & Support", "Value", "Ambience", "One-liner"],
 };
 
