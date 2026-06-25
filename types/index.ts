@@ -26,6 +26,7 @@ export const REVIEW_CATEGORIES = [
   "Treatment Experience",
   "Ambience",
   "Value",
+  "One-liner",
 ] as const;
 
 export type ReviewCategory = (typeof REVIEW_CATEGORIES)[number];

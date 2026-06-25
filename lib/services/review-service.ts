@@ -14,23 +14,24 @@ type ReviewTemplateContext = {
 };
 
 const SECTOR_CATEGORY_MAP: Record<BusinessSector, ReviewCategory[]> = {
-  Hotel: ["General", "Cleanliness", "Comfort", "Staff & Support", "Food"],
-  Hostel: ["General", "Study Environment", "Safety", "Food", "Cleanliness"],
-  Restaurant: ["General", "Food", "Service Quality", "Staff & Support", "Ambience"],
-  Cafe: ["General", "Food", "Service Quality", "Staff & Support", "Ambience"],
+  Hotel: ["General", "Cleanliness", "Comfort", "Staff & Support", "Food", "One-liner"],
+  Hostel: ["General", "Study Environment", "Safety", "Food", "Cleanliness", "One-liner"],
+  Restaurant: ["General", "Food", "Service Quality", "Staff & Support", "Ambience", "One-liner"],
+  Cafe: ["General", "Food", "Service Quality", "Staff & Support", "Ambience", "One-liner"],
   "Doctor Clinic": [
     "General",
     "Treatment Experience",
     "Staff & Support",
     "Cleanliness",
     "Comfort",
+    "One-liner",
   ],
-  Education: ["General", "Study Environment", "Staff & Support", "Safety", "Value"],
-  "Fitness Gym": ["General", "Service Quality", "Staff & Support", "Cleanliness", "Value"],
-  "Salon Spa": ["General", "Service Quality", "Staff & Support", "Cleanliness", "Comfort"],
-  "Retail Shop": ["General", "Service Quality", "Staff & Support", "Value", "Ambience"],
-  "Real Estate": ["General", "Service Quality", "Staff & Support", "Value", "Comfort"],
-  "General Business": ["General", "Service Quality", "Staff & Support", "Value", "Ambience"],
+  Education: ["General", "Study Environment", "Staff & Support", "Safety", "Value", "One-liner"],
+  "Fitness Gym": ["General", "Service Quality", "Staff & Support", "Cleanliness", "Value", "One-liner"],
+  "Salon Spa": ["General", "Service Quality", "Staff & Support", "Cleanliness", "Comfort", "One-liner"],
+  "Retail Shop": ["General", "Service Quality", "Staff & Support", "Value", "Ambience", "One-liner"],
+  "Real Estate": ["General", "Service Quality", "Staff & Support", "Value", "Comfort", "One-liner"],
+  "General Business": ["General", "Service Quality", "Staff & Support", "Value", "Ambience", "One-liner"],
 };
 
 const CATEGORY_TEMPLATES: Record<ReviewCategory, string[]> = {
@@ -77,6 +78,10 @@ const CATEGORY_TEMPLATES: Record<ReviewCategory, string[]> = {
   Value: [
     "{businessName} offers strong value for the experience provided. It feels like a smart and reliable choice for people searching for this kind of {industry} in {city}.",
     "Considering the overall quality, support, and experience, {businessName} gives good value. In {city}, it is an easy {industry} to recommend.",
+  ],
+  "One-liner": [
+    "Great {industry} in {city} — highly recommend {businessName}.",
+    "{businessName} is a reliable {industry} in {city} and well worth a visit.",
   ],
 };
 
@@ -163,6 +168,12 @@ const CATEGORY_SCRIPT_DETAILS: Record<ReviewCategory, string[]> = {
     "It feels like a practical choice for customers who want dependable quality.",
     "The business offers good value through reliable service and a smooth experience.",
   ],
+  "One-liner": [
+    "Excellent service and a smooth experience all round.",
+    "Reliable, professional, and easy to recommend.",
+    "A dependable local choice that gets it right.",
+    "Friendly, helpful, and well worth a visit.",
+  ],
 };
 
 const SCRIPT_OPENERS = [
@@ -212,8 +223,17 @@ export function buildScriptedReviews(
   return Array.from({ length: targetCount }, (_, index) => {
     const category = pickRotating(categories, index);
     const categoryDetails = CATEGORY_SCRIPT_DETAILS[category];
-    const opener = pickRotating(SCRIPT_OPENERS, index);
     const detail = pickRotating(categoryDetails, index, Math.floor(index / categories.length));
+
+    // One-liner reviews stay a single concise sentence on purpose.
+    if (category === "One-liner") {
+      return {
+        category,
+        text: fillTemplate(detail, context),
+      };
+    }
+
+    const opener = pickRotating(SCRIPT_OPENERS, index);
     const contextLine = pickRotating(SCRIPT_CONTEXT_LINES, index, category.length);
     const closer = pickRotating(SCRIPT_CLOSERS, index, categoryDetails.length);
 

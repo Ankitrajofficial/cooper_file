@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/auth";
 import { FREE_REVIEWS_PER_LINK } from "@/lib/free-tier";
-import Review from "@/models/Review";
 import { getClientForUser } from "@/lib/services/client-service";
-import { buildScriptedReviews } from "@/lib/services/review-service";
+import { generateReviewsForClient } from "@/lib/services/ai-service";
 
 type RouteContext = {
   params: Promise<{
@@ -21,27 +20,23 @@ export async function POST(_: Request, context: RouteContext) {
       return NextResponse.json({ error: "Client not found." }, { status: 404 });
     }
 
-    const reviews = buildScriptedReviews({
+    // Grok (xAI) only — generateReviewsForClient reads REVIEW_AI_PROVIDER and
+    // handles the review delete/insert plus the client update internally. It
+    // caps the count at 50, so the free-tier target is passed through as-is.
+    const count = await generateReviewsForClient({
+      clientId: client.id,
       businessName: client.businessName,
       city: client.city,
       sector: client.sector,
       industry: client.industry,
       businessDescription: client.businessDescription,
-    }, FREE_REVIEWS_PER_LINK);
-
-    await Review.deleteMany({ clientId: client.id });
-    await Review.insertMany(
-      reviews.map((review) => ({
-        clientId: client.id,
-        category: review.category,
-        text: review.text,
-      })),
-    );
+      count: FREE_REVIEWS_PER_LINK,
+    });
 
     return NextResponse.json({
       success: true,
-      count: reviews.length,
-      message: `${reviews.length} backend review scripts generated.`,
+      count,
+      message: `${count} AI review scripts generated.`,
     });
   } catch (error) {
     const message =

@@ -1,5 +1,6 @@
 import OpenAI from "openai";
-import { zodTextFormat } from "openai/helpers/zod";
+import type { ZodType } from "zod";
+import { zodResponseFormat, zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import Review from "@/models/Review";
 import Client from "@/models/Client";
@@ -12,12 +13,102 @@ const GeneratedReviewsSchema = z.object({
     .array(
       z.object({
         category: z.enum(REVIEW_CATEGORIES),
-        text: z.string().min(60).max(320),
+        text: z.string().min(40).max(320),
       }),
     )
     .min(10)
     .max(50),
 });
+
+type ReviewAiProvider = {
+  name: "openai" | "grok" | "groq";
+  client: OpenAI;
+  model: string;
+};
+
+// Provider is selected globally via REVIEW_AI_PROVIDER. Grok (xAI) and Groq
+// (GroqCloud) both expose an OpenAI-compatible API but only support Chat
+// Completions, not the Responses API, so they take a different parse path
+// below than the default OpenAI provider.
+function getReviewAiProvider(): ReviewAiProvider {
+  const provider = (process.env.REVIEW_AI_PROVIDER || "openai").trim().toLowerCase();
+
+  if (provider === "groq" || provider === "groqcloud") {
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error("Missing GROQ_API_KEY environment variable.");
+    }
+
+    return {
+      name: "groq",
+      client: new OpenAI({
+        apiKey: process.env.GROQ_API_KEY,
+        baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1",
+      }),
+      // Must be a Groq model that supports JSON-schema structured outputs.
+      // (llama-3.3-70b-versatile does NOT; gpt-oss-20b does.)
+      model: process.env.GROQ_MODEL || "openai/gpt-oss-20b",
+    };
+  }
+
+  if (provider === "grok" || provider === "xai") {
+    if (!process.env.XAI_API_KEY) {
+      throw new Error("Missing XAI_API_KEY environment variable.");
+    }
+
+    return {
+      name: "grok",
+      client: new OpenAI({
+        apiKey: process.env.XAI_API_KEY,
+        baseURL: process.env.XAI_BASE_URL || "https://api.x.ai/v1",
+      }),
+      model: process.env.XAI_MODEL || "grok-4-fast",
+    };
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("Missing OPENAI_API_KEY environment variable.");
+  }
+
+  return {
+    name: "openai",
+    client: new OpenAI({ apiKey: process.env.OPENAI_API_KEY }),
+    model: process.env.OPENAI_MODEL || "gpt-5.4-mini",
+  };
+}
+
+async function parseStructuredReviews<T extends ZodType>(
+  provider: ReviewAiProvider,
+  schema: T,
+  schemaName: string,
+  systemPrompt: string,
+  userPrompt: string,
+): Promise<z.infer<T> | null> {
+  if (provider.name !== "openai") {
+    const completion = await provider.client.chat.completions.parse({
+      model: provider.model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: zodResponseFormat(schema, schemaName),
+    });
+
+    return completion.choices[0]?.message.parsed ?? null;
+  }
+
+  const response = await provider.client.responses.parse({
+    model: provider.model,
+    input: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    text: {
+      format: zodTextFormat(schema, schemaName),
+    },
+  });
+
+  return response.output_parsed ?? null;
+}
 
 const CustomerReviewOptionsSchema = z.object({
   reviews: z
@@ -38,44 +129,26 @@ export async function generateReviewsForClient(options: {
   businessDescription?: string;
   count?: number;
 }) {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("Missing OPENAI_API_KEY environment variable.");
-  }
+  const provider = getReviewAiProvider();
 
   await connectToDatabase();
 
   const targetCount = Math.max(10, Math.min(options.count ?? 40, 50));
-  const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
   const categories = getCategoriesForSector(options.sector);
   const businessDescription = options.businessDescription?.trim();
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
 
-  const response = await openai.responses.parse({
-    model,
-    input: [
-      {
-        role: "system",
-        content:
-          "You write polished Google Business Profile review scripts for real customers. Keep the tone natural, helpful, believable, and SEO aware. Avoid repetition, avoid exaggerated claims, and make every review distinct enough that repeated visitors do not see near-duplicates.",
-      },
-      {
-        role: "user",
-        content: `Generate ${targetCount} unique review scripts for ${options.businessName}, a ${options.industry} business in ${options.city}. The broad business sector is ${options.sector}. Split the reviews across these categories only: ${categories.join(
-          ", ",
-        )}. Each review should feel human, be 2-4 sentences, sound different from the others, and naturally include high-value local SEO phrases tied to ${options.city}, ${options.industry}, and ${options.sector}. Prioritize keywords a real Google Business Profile review could naturally contain, without keyword stuffing. Reflect the real business context, audience, strengths, and experience based on this description when it is useful: ${businessDescription || "No extra description was provided, so infer sensible specifics from the business name, city, sector, and industry."} Focus on believable details, not generic praise. Do not use quotation marks, emojis, numbered lists, placeholders, or repeated opening sentences.`,
-      },
-    ],
-    text: {
-      format: zodTextFormat(GeneratedReviewsSchema, "generated_reviews"),
-    },
-  });
-
-  const parsed = response.output_parsed;
+  const parsed = await parseStructuredReviews(
+    provider,
+    GeneratedReviewsSchema,
+    "generated_reviews",
+    "You write polished Google Business Profile review scripts for real customers. Keep the tone natural, helpful, believable, and SEO aware. Avoid repetition, avoid exaggerated claims, and make every review distinct enough that repeated visitors do not see near-duplicates.",
+    `Generate ${targetCount} unique review scripts for ${options.businessName}, a ${options.industry} business in ${options.city}. The broad business sector is ${options.sector}. Split the reviews across these categories only: ${categories.join(
+      ", ",
+    )}. Most reviews should feel human, be 2-4 sentences, sound different from the others, and naturally include high-value local SEO phrases tied to ${options.city}, ${options.industry}, and ${options.sector}. The exception is the "One-liner" category: every review in that category must be exactly one short, punchy sentence (roughly 5-15 words) that still reads like a genuine customer. Prioritize keywords a real Google Business Profile review could naturally contain, without keyword stuffing. Reflect the real business context, audience, strengths, and experience based on this description when it is useful: ${businessDescription || "No extra description was provided, so infer sensible specifics from the business name, city, sector, and industry."} Focus on believable details, not generic praise. Do not use quotation marks, emojis, numbered lists, placeholders, or repeated opening sentences.`,
+  );
 
   if (!parsed) {
-    throw new Error("OpenAI did not return structured reviews.");
+    throw new Error("The review AI provider did not return structured reviews.");
   }
 
   await Review.deleteMany({ clientId: options.clientId });
@@ -125,27 +198,15 @@ export async function generateCustomerReviewOptions(options: {
   businessDescription?: string;
   rating: number;
 }) {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("Missing OPENAI_API_KEY environment variable.");
-  }
-
-  const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+  const provider = getReviewAiProvider();
   const businessDescription = options.businessDescription?.trim();
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
 
-  const response = await openai.responses.parse({
-    model,
-    input: [
-      {
-        role: "system",
-        content:
-          "You write Google Business Profile review text for a real customer after they choose a star rating. The review must match the selected rating honestly. Keep it natural, specific, paste-ready, and believable. Do not invent exact facts, names, prices, dates, discounts, medical outcomes, guarantees, or claims that were not provided. Do not use emojis, quotation marks, hashtags, numbered lists, or placeholders.",
-      },
-      {
-        role: "user",
-        content: `${getRatingInstruction(options.rating)}
+  const parsed = await parseStructuredReviews(
+    provider,
+    CustomerReviewOptionsSchema,
+    "customer_review_options",
+    "You write Google Business Profile review text for a real customer after they choose a star rating. The review must match the selected rating honestly. Keep it natural, specific, paste-ready, and believable. Do not invent exact facts, names, prices, dates, discounts, medical outcomes, guarantees, or claims that were not provided. Do not use emojis, quotation marks, hashtags, numbered lists, or placeholders.",
+    `${getRatingInstruction(options.rating)}
 
 Business name: ${options.businessName}
 City: ${options.city}
@@ -154,20 +215,10 @@ Specific industry: ${options.industry}
 Business context: ${businessDescription || "No extra context was provided. Infer only broad, sensible details from the business name, city, sector, and industry."}
 
 Return exactly 2 different review options. Each option should be 2-4 sentences, easy for a customer to paste into Google, and naturally include the business name or city only when it sounds human.`,
-      },
-    ],
-    text: {
-      format: zodTextFormat(
-        CustomerReviewOptionsSchema,
-        "customer_review_options",
-      ),
-    },
-  });
-
-  const parsed = response.output_parsed;
+  );
 
   if (!parsed) {
-    throw new Error("OpenAI did not return structured customer reviews.");
+    throw new Error("The review AI provider did not return structured customer reviews.");
   }
 
   return parsed.reviews.map((review) => review.text.trim());
