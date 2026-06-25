@@ -114,7 +114,8 @@ const CustomerReviewOptionsSchema = z.object({
   reviews: z
     .array(
       z.object({
-        text: z.string().min(40).max(420),
+        // Floor kept low so short, natural one-line reviews are not rejected.
+        text: z.string().min(20).max(420),
       }),
     )
     .length(2),
@@ -243,6 +244,18 @@ export async function generateCustomerReviewOptions(options: {
   // A throwaway seed nudges the model to produce different wording on every
   // click, so re-selecting the same rating never repeats the same reviews.
   const variationSeed = Math.random().toString(36).slice(2, 10);
+  // Randomise the length mix each click so the two options feel natural:
+  // sometimes both short, sometimes mixed, sometimes both fuller. Mixed is
+  // weighted highest because that reads most like real Google reviews.
+  const LENGTH_STYLES = [
+    "Make BOTH options a single short, natural sentence of about 8-15 words.",
+    "Make the FIRST option a single short, natural sentence of about 8-15 words, and the SECOND a fuller 2-3 sentence review.",
+    "Make the FIRST option a fuller 2-3 sentence review, and the SECOND a single short, natural sentence of about 8-15 words.",
+    "Make the FIRST option a single short, natural sentence of about 8-15 words, and the SECOND a fuller 2-3 sentence review.",
+    "Make BOTH options natural 2-4 sentence reviews.",
+  ];
+  const lengthStyle =
+    LENGTH_STYLES[Math.floor(Math.random() * LENGTH_STYLES.length)];
 
   const parsed = await parseStructuredReviews(
     provider,
@@ -258,7 +271,7 @@ Specific industry: ${options.industry}
 Niche guidance: ${getNicheGuidance(options.sector, options.industry)}
 Business context: ${businessDescription || "No extra context was provided. Infer only broad, sensible details from the business name, city, sector, and industry."}
 
-Return exactly 2 different review options. Each option should be 2-4 sentences, easy for a customer to paste into Google, and naturally include the business name or city only when it sounds human. Vary the phrasing on every request (variation seed ${variationSeed}); do not mention or reference this seed in the review text.`,
+Return exactly 2 different review options. ${lengthStyle} Keep them easy for a customer to paste into Google, and naturally include the business name or city only when it sounds human. A short option must still read like a real customer, not a slogan. Vary the phrasing and length on every request (variation seed ${variationSeed}); do not mention or reference this seed in the review text.`,
   );
 
   if (!parsed) {
