@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   let clients: DashboardClient[] = [];
   let quota = {
     linksCreatedThisMonth: 0,
-    monthlyLinkLimit: FREE_MONTHLY_LINK_LIMIT,
+    monthlyLinkLimit: FREE_MONTHLY_LINK_LIMIT as number | null,
     reviewsPerLink: FREE_REVIEWS_PER_LINK,
     canCreateLink: false,
     monthStart: "",
@@ -60,7 +60,11 @@ export default async function DashboardPage() {
             Review links
           </h1>
           <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-[var(--on-surface-variant)]">
-            <span>{quota.linksCreatedThisMonth}/{quota.monthlyLinkLimit} links this month</span>
+            <span>
+              {quota.monthlyLinkLimit === null
+                ? `${quota.linksCreatedThisMonth} links this month · Unlimited`
+                : `${quota.linksCreatedThisMonth}/${quota.monthlyLinkLimit} links this month`}
+            </span>
             <span>{activeLinks} active</span>
             <span>{quota.reviewsPerLink} scripts per link</span>
             <span>{totalViews} link opens</span>

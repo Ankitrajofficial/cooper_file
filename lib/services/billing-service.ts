@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db";
 import {
   FREE_MONTHLY_LINK_LIMIT,
   FREE_REVIEWS_PER_LINK,
+  UNLIMITED_MONTHLY_LINKS,
   getCurrentMonthBounds,
   getCurrentMonthKey,
 } from "@/lib/free-tier";
@@ -208,9 +209,12 @@ export async function getFreeTierUsageForUser(userId: string) {
 
   return {
     linksCreatedThisMonth,
-    monthlyLinkLimit: FREE_MONTHLY_LINK_LIMIT,
+    monthlyLinkLimit: UNLIMITED_MONTHLY_LINKS
+      ? (null as number | null)
+      : FREE_MONTHLY_LINK_LIMIT,
     reviewsPerLink: FREE_REVIEWS_PER_LINK,
-    canCreateLink: linksCreatedThisMonth < FREE_MONTHLY_LINK_LIMIT,
+    canCreateLink:
+      UNLIMITED_MONTHLY_LINKS || linksCreatedThisMonth < FREE_MONTHLY_LINK_LIMIT,
     monthStart: monthStart.toISOString(),
     nextMonthStart: nextMonthStart.toISOString(),
   };
