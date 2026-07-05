@@ -6,6 +6,11 @@ import Review from "@/models/Review";
 import Client from "@/models/Client";
 import { connectToDatabase } from "@/lib/db";
 import { getCategoriesForSector } from "@/lib/services/review-service";
+import {
+  HUMAN_TONE_GUIDANCE,
+  SEO_GUIDANCE,
+  humanizeReviewText,
+} from "@/lib/services/review-tone";
 import { REVIEW_CATEGORIES, type BusinessSector } from "@/types";
 
 const GeneratedReviewsSchema = z.object({
@@ -142,7 +147,7 @@ export async function generateReviewsForClient(options: {
     provider,
     GeneratedReviewsSchema,
     "generated_reviews",
-    "You write polished Google Business Profile review scripts for real customers. Keep the tone natural, helpful, believable, and SEO aware. Avoid repetition, avoid exaggerated claims, and make every review distinct enough that repeated visitors do not see near-duplicates.",
+    `You write Google Business Profile review scripts for real customers. ${HUMAN_TONE_GUIDANCE} ${SEO_GUIDANCE} Avoid repetition, avoid exaggerated claims, and make every review distinct enough that repeated visitors do not see near-duplicates.`,
     `Generate ${targetCount} unique review scripts for ${options.businessName}, a ${options.industry} business in ${options.city}. The broad business sector is ${options.sector}. Niche guidance: ${getNicheGuidance(
       options.sector,
       options.industry,
@@ -161,7 +166,7 @@ export async function generateReviewsForClient(options: {
     parsed.reviews.map((review) => ({
       clientId: options.clientId,
       category: review.category,
-      text: review.text.trim(),
+      text: humanizeReviewText(review.text),
     })),
   );
 
@@ -261,7 +266,7 @@ export async function generateCustomerReviewOptions(options: {
     provider,
     CustomerReviewOptionsSchema,
     "customer_review_options",
-    "You write Google Business Profile review text for a real customer. Follow the tone instruction exactly. Keep it natural, specific, paste-ready, and believable, and make every generation fresh with clearly different wording, structure, and opening from any other. Do not invent exact facts, names, prices, dates, discounts, medical outcomes, guarantees, or claims that were not provided. Do not use emojis, quotation marks, hashtags, numbered lists, or placeholders.",
+    `You write Google Business Profile review text for a real customer. Follow the tone instruction exactly. ${HUMAN_TONE_GUIDANCE} ${SEO_GUIDANCE} Keep it specific, paste-ready, and believable, and make every generation fresh with clearly different wording, structure, and opening from any other. Do not invent exact facts, names, prices, dates, discounts, medical outcomes, guarantees, or claims that were not provided. Do not use emojis, quotation marks, hashtags, numbered lists, or placeholders.`,
     `${getRatingInstruction(options.rating, options.sector)}
 
 Business name: ${options.businessName}
@@ -278,5 +283,5 @@ Return exactly 2 different review options. ${lengthStyle} Keep them easy for a c
     throw new Error("The review AI provider did not return structured customer reviews.");
   }
 
-  return parsed.reviews.map((review) => review.text.trim());
+  return parsed.reviews.map((review) => humanizeReviewText(review.text));
 }
