@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth/auth-form";
 import { SiteHeader } from "@/components/site/site-header";
-import { getPostLoginRedirectPath, getSession } from "@/lib/auth";
+import { getCookieSession, getPostLoginRedirectPath } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function SignupPage() {
-  const session = await getSession();
+  // Must match middleware's JWT-cookie source of truth, not the Supabase
+  // session — otherwise a Supabase-session-without-JWT loops here forever.
+  const session = await getCookieSession();
 
   if (session) {
     redirect(getPostLoginRedirectPath(session.role));

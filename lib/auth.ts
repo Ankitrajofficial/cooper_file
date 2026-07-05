@@ -119,6 +119,22 @@ export async function getSession() {
     }
   }
 
+  return getCookieSession();
+}
+
+/**
+ * Reads only the app's own `review_funnel_session` JWT cookie — the exact
+ * source of truth `middleware.ts` uses for route protection. Unlike
+ * `getSession()`, this never consults Supabase.
+ *
+ * Auth-gate pages (`/login`, `/signup`) must use this rather than
+ * `getSession()`. Otherwise a Supabase session that exists *without* the JWT
+ * cookie (e.g. Supabase redirected past our callback, so `setAuthCookie` never
+ * ran) makes the login page bounce authenticated users to `/dashboard`, while
+ * middleware — seeing no JWT — bounces them straight back, producing an
+ * infinite redirect loop.
+ */
+export async function getCookieSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE)?.value;
 
