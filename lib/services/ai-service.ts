@@ -236,19 +236,49 @@ function getRatingInstruction(rating: number, sector: BusinessSector) {
     : "The customer selected a low rating, but business policy is to keep the review positive and reassuring. Write two genuinely positive reviews describing a professional, dependable, worthwhile experience that the customer would be happy to post. Do not mention any negatives.";
 }
 
-export async function generateCustomerReviewOptions(options: {
+const CustomerReviewBatchSchema = z.object({
+  reviews: z
+    .array(
+      z.object({
+        text: z.string().min(20).max(420),
+      }),
+    )
+    .min(2)
+    .max(16),
+});
+
+export type CustomerReviewContext = {
   businessName: string;
   city: string;
   sector: BusinessSector;
   industry: string;
   businessDescription?: string;
   rating: number;
-}) {
-  const provider = getReviewAiProvider();
+};
+
+const CUSTOMER_REVIEW_SYSTEM_PROMPT = `You write Google Business Profile review text for a real customer. Follow the tone instruction exactly. ${HUMAN_TONE_GUIDANCE} ${SEO_GUIDANCE} Keep it specific, paste-ready, and believable, and make every generation fresh with clearly different wording, structure, and opening from any other. Do not invent exact facts, names, prices, dates, discounts, medical outcomes, guarantees, or claims that were not provided. Do not use emojis, quotation marks, hashtags, numbered lists, or placeholders.`;
+
+function buildCustomerReviewUserPrompt(
+  options: CustomerReviewContext,
+  count: number,
+  lengthStyle: string,
+  variationSeed: string,
+) {
   const businessDescription = options.businessDescription?.trim();
-  // A throwaway seed nudges the model to produce different wording on every
-  // click, so re-selecting the same rating never repeats the same reviews.
-  const variationSeed = Math.random().toString(36).slice(2, 10);
+
+  return `${getRatingInstruction(options.rating, options.sector)}
+
+Business name: ${options.businessName}
+City: ${options.city}
+Business sector: ${options.sector}
+Specific industry: ${options.industry}
+Niche guidance: ${getNicheGuidance(options.sector, options.industry)}
+Business context: ${businessDescription || "No extra context was provided. Infer only broad, sensible details from the business name, city, sector, and industry."}
+
+Return exactly ${count} different review options. ${lengthStyle} Keep them easy for a customer to paste into Google, and naturally include the business name or city only when it sounds human. A short option must still read like a real customer, not a slogan. Vary the phrasing and length across the set (variation seed ${variationSeed}); do not mention or reference this seed in the review text.`;
+}
+
+function pickPairLengthStyle() {
   // Randomise the length mix each click so the two options feel natural:
   // sometimes both short, sometimes mixed, sometimes both fuller. Mixed is
   // weighted highest because that reads most like real Google reviews.
@@ -259,24 +289,51 @@ export async function generateCustomerReviewOptions(options: {
     "Make the FIRST option a single short, natural sentence of about 8-15 words, and the SECOND a fuller 2-3 sentence review.",
     "Make BOTH options natural 2-4 sentence reviews.",
   ];
-  const lengthStyle =
-    LENGTH_STYLES[Math.floor(Math.random() * LENGTH_STYLES.length)];
+
+  return LENGTH_STYLES[Math.floor(Math.random() * LENGTH_STYLES.length)];
+}
+
+// Live path used when the pre-generated pool is empty. Returns exactly two
+// paste-ready options and is the slow (blocking) call we try to avoid.
+export async function generateCustomerReviewOptions(
+  options: CustomerReviewContext,
+) {
+  const provider = getReviewAiProvider();
+  const variationSeed = Math.random().toString(36).slice(2, 10);
 
   const parsed = await parseStructuredReviews(
     provider,
     CustomerReviewOptionsSchema,
     "customer_review_options",
-    `You write Google Business Profile review text for a real customer. Follow the tone instruction exactly. ${HUMAN_TONE_GUIDANCE} ${SEO_GUIDANCE} Keep it specific, paste-ready, and believable, and make every generation fresh with clearly different wording, structure, and opening from any other. Do not invent exact facts, names, prices, dates, discounts, medical outcomes, guarantees, or claims that were not provided. Do not use emojis, quotation marks, hashtags, numbered lists, or placeholders.`,
-    `${getRatingInstruction(options.rating, options.sector)}
+    CUSTOMER_REVIEW_SYSTEM_PROMPT,
+    buildCustomerReviewUserPrompt(options, 2, pickPairLengthStyle(), variationSeed),
+  );
 
-Business name: ${options.businessName}
-City: ${options.city}
-Business sector: ${options.sector}
-Specific industry: ${options.industry}
-Niche guidance: ${getNicheGuidance(options.sector, options.industry)}
-Business context: ${businessDescription || "No extra context was provided. Infer only broad, sensible details from the business name, city, sector, and industry."}
+  if (!parsed) {
+    throw new Error("The review AI provider did not return structured customer reviews.");
+  }
 
-Return exactly 2 different review options. ${lengthStyle} Keep them easy for a customer to paste into Google, and naturally include the business name or city only when it sounds human. A short option must still read like a real customer, not a slogan. Vary the phrasing and length on every request (variation seed ${variationSeed}); do not mention or reference this seed in the review text.`,
+  return parsed.reviews.map((review) => humanizeReviewText(review.text));
+}
+
+// Batch path used to fill the ready-to-serve pool in one AI call, so later
+// star taps can be answered instantly from the pool with no live call.
+export async function generateCustomerReviewBatch(
+  options: CustomerReviewContext,
+  count: number,
+) {
+  const provider = getReviewAiProvider();
+  const safeCount = Math.max(2, Math.min(count, 16));
+  const variationSeed = Math.random().toString(36).slice(2, 10);
+  const lengthStyle =
+    "Vary the lengths across the set: include several single short, natural sentences of about 8-15 words and several fuller 2-3 sentence reviews, so the set reads like a natural mix of real Google reviews. Every option must sound like a different customer.";
+
+  const parsed = await parseStructuredReviews(
+    provider,
+    CustomerReviewBatchSchema,
+    "customer_review_batch",
+    CUSTOMER_REVIEW_SYSTEM_PROMPT,
+    buildCustomerReviewUserPrompt(options, safeCount, lengthStyle, variationSeed),
   );
 
   if (!parsed) {

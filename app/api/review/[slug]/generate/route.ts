@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getPublicClientBySlug } from "@/lib/services/client-service";
-import { generateCustomerReviewOptions } from "@/lib/services/ai-service";
+import {
+  refillBucket,
+  serveReviewOptions,
+} from "@/lib/services/review-pool-service";
 
 type RouteContext = {
   params: Promise<{
@@ -39,18 +42,30 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    // AI-only (Groq): every click generates fresh, distinct review options.
-    const reviews = await generateCustomerReviewOptions({
+    // Serve instantly from the pre-generated pool; only the very first tap on a
+    // fresh link pays for a live AI call.
+    const reviewContext = {
+      clientId: payload.client.id,
       businessName: payload.client.businessName,
       city: payload.client.city,
       sector: payload.client.sector,
       industry: payload.client.industry,
       businessDescription: payload.client.businessDescription,
+    };
+
+    const { options, bucket, shouldRefill } = await serveReviewOptions(
+      reviewContext,
       rating,
-    });
+    );
+
+    // Top the pool back up after the response is sent, so it never blocks the
+    // customer and the next taps stay instant with fresh wording.
+    if (shouldRefill) {
+      after(() => refillBucket(reviewContext, bucket).catch(() => {}));
+    }
 
     return NextResponse.json(
-      { reviews },
+      { reviews: options },
       {
         headers: {
           "Cache-Control": "no-store",
