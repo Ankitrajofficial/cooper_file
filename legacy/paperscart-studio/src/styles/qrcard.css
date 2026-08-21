@@ -1,0 +1,361 @@
+/* src/styles/qrcard.css */
+
+/* Keep the card layout strictly matching the original dimensions */
+.qr-pdf-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-card {
+  width: 400px;
+  height: 600px;
+  background: white;
+  border-radius: 20px;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 2rem;
+  transition: all 0.5s ease;
+  font-family: inherit;
+}
+
+.qr-card .card-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  z-index: 2;
+  width: 100%;
+}
+
+.qr-card .card-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  word-wrap: break-word;
+}
+
+.qr-card .card-header .subtitle {
+  font-size: 1rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.qr-card .qr-container {
+  width: 250px;
+  height: 250px;
+  background: white;
+  border-radius: 24px;
+  padding: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.qr-card .qr-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-weight: 500;
+  overflow: hidden;
+  position: relative;
+}
+
+.qr-card .qr-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: white;
+}
+
+.qr-card .card-footer {
+  margin-top: auto;
+  z-index: 2;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.qr-card .decoration {
+  position: absolute;
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.qr-card .sweet-msg {
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: center;
+  max-width: 85%;
+  margin: 1.5rem auto 0;
+  color: inherit;
+  opacity: 0.85;
+  z-index: 2;
+  line-height: 1.4;
+}
+
+.qr-card .powered-by {
+  position: absolute;
+  bottom: 15px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: inherit;
+  opacity: 0.5;
+  letter-spacing: 2px;
+  z-index: 5;
+}
+
+/* ================== THEMES ================== */
+
+/* Theme: Default Modern */
+.theme-default {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+.theme-default .card-header h1 {
+  color: #0f172a;
+}
+.theme-default .subtitle {
+  color: #475569;
+}
+.theme-default .dec-1 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(
+    circle,
+    rgba(79, 70, 229, 0.1) 0%,
+    rgba(79, 70, 229, 0) 70%
+  );
+  top: -100px;
+  right: -100px;
+}
+.theme-default .dec-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(14, 165, 233, 0.08) 0%,
+    rgba(14, 165, 233, 0) 70%
+  );
+  bottom: -150px;
+  left: -150px;
+}
+.theme-default .qr-container {
+  border: 4px solid #f1f5f9;
+}
+
+/* Theme: Holi Festival */
+.theme-holi {
+  background:
+    linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%),
+    radial-gradient(
+      circle at top left,
+      rgba(255, 0, 204, 0.1),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(0, 255, 204, 0.1),
+      transparent 50%
+    );
+  color: #2d3748;
+}
+.theme-holi .card-header h1 {
+  background: linear-gradient(
+    to right,
+    #ff00cc,
+    #333399,
+    #ff6600,
+    #00ffcc,
+    #ff00cc
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+}
+.theme-holi .qr-container {
+  background: linear-gradient(135deg, #ff00cc 0%, #ff6600 50%, #333399 100%);
+  padding: 8px;
+  position: relative;
+  z-index: 2;
+}
+.theme-holi .qr-container::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  background: linear-gradient(45deg, #ff00cc, #333399, #00ffcc, #ff6600);
+  z-index: -1;
+  filter: blur(8px);
+  border-radius: 30px;
+}
+.theme-holi .qr-placeholder {
+  background: white;
+  border: none;
+}
+.theme-holi .dec-1 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 0, 204, 0.4) 0%,
+    transparent 70%
+  );
+  top: -50px;
+  left: -100px;
+  filter: blur(10px);
+  mix-blend-mode: multiply;
+}
+.theme-holi .dec-2 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 102, 0, 0.4) 0%,
+    transparent 70%
+  );
+  bottom: -100px;
+  right: -100px;
+  filter: blur(15px);
+  mix-blend-mode: multiply;
+}
+.theme-holi::after {
+  content: "";
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 204, 0.3) 0%,
+    transparent 70%
+  );
+  top: 40%;
+  left: -50px;
+  filter: blur(15px);
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+.theme-holi .sweet-msg {
+  color: #333399;
+  font-weight: 600;
+}
+
+/* Theme: Midnight Dark */
+.theme-dark {
+  background: linear-gradient(145deg, #111827 0%, #000000 100%);
+  color: #f3f4f6;
+}
+.theme-dark .card-header h1 {
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+.theme-dark .subtitle {
+  color: #9ca3af;
+}
+.theme-dark .qr-container {
+  background: #1f2937;
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.2);
+  border: 1px solid #374151;
+}
+.theme-dark .qr-placeholder {
+  border-color: #4b5563;
+  color: #6b7280;
+}
+.theme-dark .dec-1 {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  top: 0;
+  left: 0;
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(56, 189, 248, 0.15),
+    transparent 50%
+  );
+}
+.theme-dark .dec-2 {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  bottom: 0;
+  left: 0;
+  background: radial-gradient(
+    circle at 50% 100%,
+    rgba(139, 92, 246, 0.15),
+    transparent 50%
+  );
+}
+.theme-dark .sweet-msg {
+  color: #9ca3af;
+}
+
+/* Theme: Elegant Gold */
+.theme-elegant {
+  background: #ffffff;
+  color: #1a1a1a;
+  border: 12px solid #000000;
+}
+.theme-elegant .card-header h1 {
+  font-family: serif;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.theme-elegant .subtitle {
+  color: #c5a059;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.theme-elegant .card-footer {
+  color: #c5a059;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 0.9rem;
+}
+.theme-elegant .qr-container {
+  border: 2px solid #c5a059;
+  box-shadow: none;
+  padding: 10px;
+  background: #fafafa;
+}
+.theme-elegant .qr-placeholder {
+  border: 1px solid #e5e5e5;
+}
+.theme-elegant .dec-1 {
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  border: 1px solid #c5a059;
+  border-radius: 8px;
+  top: 5px;
+  left: 5px;
+}
+.theme-elegant .dec-2 {
+  display: none;
+}
